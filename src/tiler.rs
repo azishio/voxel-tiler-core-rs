@@ -1,4 +1,3 @@
-use num::Num;
 use vec_x::VecX;
 
 use crate::mesh::VoxelMesh;
@@ -12,7 +11,7 @@ pub struct VoxelTile {
 pub struct VoxelTiler {}
 
 impl VoxelTiler {
-    pub fn from_point_cloud<T: Num>(point_cloud: PixelPointCloud) -> Vec<VoxelTile> {
+    pub fn from_point_cloud(point_cloud: PixelPointCloud) -> Vec<VoxelTile> {
         let tiled_points = point_cloud.split_by_tile();
 
 
