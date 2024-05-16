@@ -2,7 +2,6 @@ use std::io::{BufReader, Read};
 
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
-use num::Num;
 use ordered_float::NotNan;
 use ply_rs::parser::Parser;
 use ply_rs::ply::{Addable, DefaultElement, ElementDef, Encoding, Ply, Property, PropertyAccess, PropertyDef, PropertyType, ScalarType};
@@ -137,7 +136,7 @@ impl PlyStructs {
         }
     }
 
-    pub fn from_ply<T: Read>(mut file: T) -> Self {
+    pub fn from_ply<T: Read>(file: T) -> Self {
         let mut buf_reader = BufReader::new(file);
 
         let vertex_parser = Parser::<Vertex>::new();
@@ -162,7 +161,7 @@ impl PlyStructs {
         Self::new(vertex_list, material_list, face_list)
     }
 
-    pub fn from_voxel_mesh<T: Num>(voxel_mesh: VoxelMesh<f32>) {
+    pub fn from_voxel_mesh(voxel_mesh: VoxelMesh<f32>) -> Self {
         let VoxelMesh {
             vertices,
             materials,
@@ -170,8 +169,8 @@ impl PlyStructs {
             ..
         } = voxel_mesh;
 
-        let vertices = vertices.into_iter().map(|vertex| Vertex::from(vertex)).collect::<Vec<_>>();
-        let materials = materials.into_iter().map(|material| Material::from(material)).collect::<Vec<_>>();
+        let vertices = vertices.into_iter().map(Vertex::from).collect::<Vec<_>>();
+        let materials = materials.into_iter().map(Material::from).collect::<Vec<_>>();
         let faces = face.into_iter().map(|(vertex_indices, material_index)| {
             let vertex_indices = vertex_indices.into_iter().map(|i| i as i32).collect::<Vec<_>>();
             let material_index = material_index as i32;
@@ -187,7 +186,7 @@ impl PlyStructs {
             vertices,
             materials,
             faces,
-        };
+        }
     }
 
     pub fn to_buf(self) -> Vec<u8> {
