@@ -162,6 +162,34 @@ impl PlyStructs {
         Self::new(vertex_list, material_list, face_list)
     }
 
+    pub fn from_voxel_mesh<T: Num>(voxel_mesh: VoxelMesh<f32>) {
+        let VoxelMesh {
+            vertices,
+            materials,
+            face,
+            ..
+        } = voxel_mesh;
+
+        let vertices = vertices.into_iter().map(|vertex| Vertex::from(vertex)).collect::<Vec<_>>();
+        let materials = materials.into_iter().map(|material| Material::from(material)).collect::<Vec<_>>();
+        let faces = face.into_iter().map(|(vertex_indices, material_index)| {
+            let vertex_indices = vertex_indices.into_iter().map(|i| i as i32).collect::<Vec<_>>();
+            let material_index = material_index as i32;
+
+            Face {
+                vertex_indices,
+                material_index,
+            }
+        }).collect::<Vec<_>>();
+
+
+        Self {
+            vertices,
+            materials,
+            faces,
+        };
+    }
+
     pub fn to_buf(self) -> Vec<u8> {
         let mut buf = Vec::<u8>::new();
 
