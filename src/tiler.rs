@@ -1,25 +1,19 @@
 use std::fmt::Debug;
 use std::io::{BufRead, Seek};
 
-use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolution, ZoomLv};
+use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel_resolution, ZoomLv};
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
 #[cfg(feature = "las")]
 use las::{Color, Read, Reader};
-use vec_x::VecX;
 
-use crate::{Coord, PixelPointCloud, Point, RGB, VoxelCollection, VoxelMesh};
-
-pub struct VoxelTile {
-    pub voxel_mesh: VoxelMesh<f32>,
-    pub tile_idx: VecX<u32, 2>,
-}
+use crate::{Coord, PixelPointCloud, Point, RGB, VoxelCollection, Voxelizer, VoxelModel};
 
 pub struct VoxelTiler {}
 
 impl VoxelTiler {
     #[cfg(feature = "las")]
-    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv_list: Vec<ZoomLv>, rotate: bool) -> Vec<(ZoomLv, Vec<VoxelTile>)> {
+    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv_list: Vec<ZoomLv>, rotate: bool) -> Vec<(ZoomLv, Vec<VoxelModel>)> {
         let mut reader = Reader::new(las).unwrap();
 
 
@@ -55,33 +49,11 @@ impl VoxelTiler {
         }).collect::<Vec<_>>()
     }
 
-    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> Vec<VoxelTile> {
-        let voxel_collections = VoxelCollection::from_pixel_point_cloud(point_cloud);
+    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> Vec<VoxelModel> {
+        let voxel_collections = VoxelCollection::from_pixel_point_cloud_with_tiling(point_cloud);
 
         voxel_collections.into_iter().map(|(tile_idx, voxel_collection)| {
-            let f = |v: Coord<u32>, zoom_lv: ZoomLv| -> Coord<f32>{
-                let voxel_size = {
-                    let (_, lat) = pixel2ll((v[0], v[1]), zoom_lv);
-                    pixel_resolution(lat, zoom_lv)
-                };
-
-
-                //   (ピクセル座標 - タイル座標 * 1タイルのピクセル数) * ボクセルサイズ
-                // = (タイル右上を原点としたローカルのピクセル座標) * ボクセルサイズ
-                // = タイル右上を原点とした点の位置(m)
-                let x = ((v[0] - (tile_idx[0] * 256)) as f64 * voxel_size) as f32;
-                let y = ((v[1] - (tile_idx[1] * 256)) as f64 * voxel_size) as f32;
-                let z = (v[2] as f64 * voxel_size) as f32;
-
-                VecX::new([x, y, z])
-            };
-
-            let voxel_mesh = VoxelMesh::<u32>::from_voxel_collection(voxel_collection).coordinate_transform(f);
-
-            VoxelTile {
-                voxel_mesh,
-                tile_idx,
-            }
+            Voxelizer::from_voxel_collection(tile_idx, voxel_collection)
         }).collect::<Vec<_>>()
     }
 }

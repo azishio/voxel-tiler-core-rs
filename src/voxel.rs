@@ -73,37 +73,43 @@ impl VoxelCollection {
         }
     }
 
-    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> Vec<(TileIdx, Self)> {
+    pub fn from_pixel_point_cloud_with_tiling(point_cloud: PixelPointCloud) -> Vec<(TileIdx, Self)> {
         let split_points = point_cloud.split_by_tile();
 
         split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
-            let PixelPointCloud { points, zoom_lv } = pixel_point_cloud;
+            let voxel_collection = Self::from_pixel_point_cloud(pixel_point_cloud);
 
-            let mut voxel_map = HashMap::<Coord<u32>, (usize, SumRGB), FxBuildHasher>::with_hasher(Default::default());
-
-            points.into_iter().for_each(|(pixel_coord, rgb)| {
-                let rgb = SumRGB::new([rgb[0] as usize, rgb[1] as usize, rgb[2] as usize]);
-
-                voxel_map.entry(pixel_coord).and_modify(|(count, sum_rgb)| {
-                    *sum_rgb += rgb;
-                    *count += 1;
-                }).or_insert((0, Coord::new([0, 0, 0])));
-            });
-
-            let voxels = voxel_map.into_iter().filter_map(|(pixel_coord, (count, sum_rgb))| {
-                if count == 0 {
-                    return None;
-                }
-
-                let rgb = RGB::new([
-                    (sum_rgb[0] / count) as u8,
-                    (sum_rgb[1] / count) as u8,
-                    (sum_rgb[2] / count) as u8,
-                ]);
-                Some((pixel_coord, rgb))
-            }).collect::<Vec<_>>();
-
-            (tile_idx, Self { voxels, zoom_lv })
+            (tile_idx, voxel_collection)
         }).collect::<Vec<_>>()
+    }
+
+    pub fn from_pixel_point_cloud(pixel_point_cloud: PixelPointCloud) -> Self {
+        let PixelPointCloud { points, zoom_lv } = pixel_point_cloud;
+
+        let mut voxel_map = HashMap::<Coord<u32>, (usize, SumRGB), FxBuildHasher>::with_hasher(Default::default());
+
+        points.into_iter().for_each(|(pixel_coord, rgb)| {
+            let rgb = SumRGB::new([rgb[0] as usize, rgb[1] as usize, rgb[2] as usize]);
+
+            voxel_map.entry(pixel_coord).and_modify(|(count, sum_rgb)| {
+                *sum_rgb += rgb;
+                *count += 1;
+            }).or_insert((0, Coord::new([0, 0, 0])));
+        });
+
+        let voxels = voxel_map.into_iter().filter_map(|(pixel_coord, (count, sum_rgb))| {
+            if count == 0 {
+                return None;
+            }
+
+            let rgb = RGB::new([
+                (sum_rgb[0] / count) as u8,
+                (sum_rgb[1] / count) as u8,
+                (sum_rgb[2] / count) as u8,
+            ]);
+            Some((pixel_coord, rgb))
+        }).collect::<Vec<_>>();
+
+        Self { voxels, zoom_lv }
     }
 }
