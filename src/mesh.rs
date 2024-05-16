@@ -18,7 +18,6 @@ pub struct VoxelMesh<T: Num> {
     pub vertices: Vec<Coord<T>>,
     pub materials: Vec<RGB>,
     pub face: Vec<(VertexIndices, MaterialIndex)>,
-    pub voxel_size: f32,
     pub zoom_lv: ZoomLv,
 }
 
@@ -28,7 +27,6 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
             vertices,
             materials,
             face,
-            voxel_size,
             zoom_lv,
         }
     }
@@ -38,13 +36,12 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
             vertices: Vec::new(),
             materials: Vec::new(),
             face: Vec::new(),
-            voxel_size: 0.,
             zoom_lv: ZoomLv::Lv0,
         }
     }
 
     pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
-        let VoxelCollection { voxels, voxel_size, zoom_lv } = voxel_collection;
+        let VoxelCollection { voxels, zoom_lv } = voxel_collection;
 
         let voxel_set = HashSet::<Coord<u32>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
 
@@ -85,21 +82,19 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
             vertices,
             materials,
             face: face_list,
-            voxel_size,
             zoom_lv,
         }
     }
 
-    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>, f32, ZoomLv) -> Coord<U>) -> VoxelMesh<U> {
-        let Self { vertices, materials, face, voxel_size, zoom_lv } = self;
+    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>, ZoomLv) -> Coord<U>) -> VoxelMesh<U> {
+        let Self { vertices, materials, face, zoom_lv } = self;
 
-        let vertices = vertices.into_iter().map(|v| f(v, self.voxel_size, self.zoom_lv)).collect::<Vec<_>>();
+        let vertices = vertices.into_iter().map(|v| f(v, self.zoom_lv)).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
             materials,
             face,
-            voxel_size,
             zoom_lv,
         }
     }
