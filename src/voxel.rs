@@ -13,14 +13,14 @@ pub type Point<T: Num> = (Coord<T>, RGB);
 type SumRGB = VecX<u32, 3>;
 type TileIdx = VecX<u32, 2>;
 
-struct PointCloud<T: Num> {
-    points: Vec<Point<T>>,
+pub struct PixelPointCloud {
+    points: Vec<Point<u32>>,
     voxel_size: f32,
     zoom_lv: ZoomLv,
 }
 
-impl<T: Num + Copy> PointCloud<T> {
-    pub fn new(points: Vec<Point<T>>, voxel_size: f32, zoom_lv: ZoomLv) -> Self {
+impl PixelPointCloud {
+    pub fn new(points: Vec<Point<u32>>, voxel_size: f32, zoom_lv: ZoomLv) -> Self {
         Self {
             points,
             voxel_size,
@@ -36,22 +36,8 @@ impl<T: Num + Copy> PointCloud<T> {
         }
     }
 
-    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>) -> Coord<U>) -> PointCloud<U> {
-        let Self { points, voxel_size, zoom_lv } = self;
-
-        let points = points.into_iter().map(|(coord, rgb)| (f(coord), rgb)).collect::<Vec<_>>();
-
-        PointCloud {
-            points,
-            voxel_size,
-            zoom_lv,
-        }
-    }
-}
-
-impl PointCloud<u32> {
-    pub fn split_by_tile(self) -> Vec<(TileIdx, PointCloud<u32>)> {
-        let mut tiled_points = HashMap::<TileIdx, PointCloud<u32>, FxBuildHasher>::with_hasher(Default::default());
+    pub fn split_by_tile(self) -> Vec<(TileIdx, PixelPointCloud)> {
+        let mut tiled_points = HashMap::<TileIdx, PixelPointCloud, FxBuildHasher>::with_hasher(Default::default());
 
         self.points.into_iter().for_each(|(pixel_coord, rgb)| {
             let tile_idx = {
@@ -62,22 +48,22 @@ impl PointCloud<u32> {
                 TileIdx::new([tile_x, tile_y])
             };
 
-            tiled_points.entry(tile_idx).or_insert(PointCloud::new(Vec::new(), self.voxel_size, self.zoom_lv)).points.push((pixel_coord, rgb));
+            tiled_points.entry(tile_idx).or_insert(PixelPointCloud::new(Vec::new(), self.voxel_size, self.zoom_lv)).points.push((pixel_coord, rgb));
         });
 
         tiled_points.into_iter().collect::<Vec<_>>()
     }
 }
 
-pub struct VoxelCollection<T: Num> {
-    pub(crate) voxels: Vec<Point<T>>,
+pub struct VoxelCollection {
+    pub(crate) voxels: Vec<Point<u32>>,
     pub(crate) voxel_size: f32,
     pub(crate) zoom_lv: ZoomLv,
 }
 
-impl<T: Num + Eq + Hash> VoxelCollection<T> {
+impl VoxelCollection {
     pub fn new(
-        voxels: Vec<Point<T>>,
+        voxels: Vec<Point<u32>>,
         voxel_size: f32,
         zoom_lv: ZoomLv,
     ) -> Self {
@@ -96,15 +82,15 @@ impl<T: Num + Eq + Hash> VoxelCollection<T> {
         }
     }
 
-    pub fn from_point_cloud(point_cloud: PointCloud<T>) -> Self {
-        let PointCloud {
+    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> Self {
+        let PixelPointCloud {
             points,
             voxel_size,
             zoom_lv,
         } = point_cloud;
 
 
-        let mut voxel_map = HashMap::<Coord<T>, (u32, SumRGB), FxBuildHasher>::with_hasher(Default::default());
+        let mut voxel_map = HashMap::<Coord<u32>, (u32, SumRGB), FxBuildHasher>::with_hasher(Default::default());
 
         points.into_iter().for_each(|(pixel_coord, rgb)| {
             let rgb = SumRGB::new([rgb[0] as u32, rgb[1] as u32, rgb[2] as u32]);
@@ -125,18 +111,6 @@ impl<T: Num + Eq + Hash> VoxelCollection<T> {
         }).collect::<Vec<_>>();
 
         Self {
-            voxels,
-            voxel_size,
-            zoom_lv,
-        }
-    }
-
-    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>) -> Coord<U>) -> VoxelCollection<U> {
-        let Self { voxels, voxel_size, zoom_lv } = self;
-
-        let voxels = voxels.into_iter().map(|(coord, rgb)| (f(coord), rgb)).collect::<Vec<_>>();
-
-        VoxelCollection {
             voxels,
             voxel_size,
             zoom_lv,

@@ -43,12 +43,12 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
         }
     }
 
-    pub fn from_voxel_collection(voxel_collection: VoxelCollection<T>) -> VoxelMesh<T> {
+    pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
         let VoxelCollection { voxels, voxel_size, zoom_lv } = voxel_collection;
 
-        let voxel_set = HashSet::<Coord<T>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
+        let voxel_set = HashSet::<Coord<u32>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
 
-        let mut vertex_set = IndexSet::<Coord<T>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
+        let mut vertex_set = IndexSet::<Coord<u32>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
         let mut material_set = IndexSet::<RGB, FxBuildHasher>::with_hasher(FxBuildHasher::default());
 
         // ここでメッシュを構成しながら、(頂点,マテリアル)のvecを作成する
@@ -58,12 +58,12 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
             let z = pixel_coord[2];
 
             [
-                ([(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)], voxel_set.contains(&Coord::new([x + T::one(), y, z]))),
-                ([(0, 0, 0), (0, 1, 0), (0, 1, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x - T::one(), y, z]))),
-                ([(0, 1, 0), (1, 1, 0), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y + T::one(), z]))),
-                ([(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x, y - T::one(), z]))),
-                ([(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y, z + T::one()]))),
-                ([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], voxel_set.contains(&Coord::new([x, y, z - T::one()]))),
+                ([(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)], voxel_set.contains(&Coord::new([x + 1, y, z]))),
+                ([(0, 0, 0), (0, 1, 0), (0, 1, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x - 1, y, z]))),
+                ([(0, 1, 0), (1, 1, 0), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y + 1, z]))),
+                ([(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x, y - 1, z]))),
+                ([(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y, z + 1]))),
+                ([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], voxel_set.contains(&Coord::new([x, y, z - 1]))),
             ].iter().filter_map(|(vertexes, has_adjacent)| {
                 if *has_adjacent {
                     None
@@ -90,10 +90,10 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
         }
     }
 
-    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>) -> Coord<U>) -> VoxelMesh<U> {
+    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>, f32, ZoomLv) -> Coord<U>) -> VoxelMesh<U> {
         let Self { vertices, materials, face, voxel_size, zoom_lv } = self;
 
-        let vertices = vertices.into_iter().map(f).collect::<Vec<_>>();
+        let vertices = vertices.into_iter().map(|v| f(v, self.voxel_size, self.zoom_lv)).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
