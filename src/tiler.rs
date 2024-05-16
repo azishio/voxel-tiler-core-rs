@@ -1,7 +1,6 @@
 use vec_x::VecX;
 
-use crate::mesh::VoxelMesh;
-use crate::voxel::{PixelPointCloud, VoxelCollection};
+use crate::{PixelPointCloud, VoxelCollection, VoxelMesh};
 
 pub struct VoxelTile {
     pub voxel_mesh: VoxelMesh<f32>,

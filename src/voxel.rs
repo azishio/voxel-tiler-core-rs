@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::hash::Hash;
 
 use coordinate_transformer::pixel_ll::ZoomLv;
 use fxhash::FxBuildHasher;

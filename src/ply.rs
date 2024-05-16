@@ -9,7 +9,7 @@ use ply_rs::ply::Property::{Float, Int, ListInt, UChar};
 use ply_rs::writer::Writer;
 use vec_x::VecX;
 
-use crate::mesh::VoxelMesh;
+use crate::VoxelMesh;
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 struct Vertex {

@@ -7,7 +7,7 @@ use indexmap::IndexSet;
 use num::Num;
 use vec_x::VecX;
 
-use crate::voxel::{RGB, VoxelCollection};
+use crate::{RGB, VoxelCollection};
 
 type MaterialIndex = usize;
 type VertexIndices = Vec<usize>;
