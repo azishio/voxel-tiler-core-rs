@@ -14,9 +14,9 @@ type SumRGB = VecX<u32, 3>;
 type TileIdx = VecX<u32, 2>;
 
 pub struct PixelPointCloud {
-    points: Vec<Point<u32>>,
-    voxel_size: f32,
-    zoom_lv: ZoomLv,
+    pub points: Vec<Point<u32>>,
+    pub voxel_size: f32,
+    pub zoom_lv: ZoomLv,
 }
 
 impl PixelPointCloud {
