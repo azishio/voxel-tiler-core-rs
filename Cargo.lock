@@ -65,9 +65,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "coordinate-transformer"
-version = "1.2.0"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20ae7abf8b8e64a191c1579edd1ce0371c1ceba7e8f9a9d366928d2d7f68fb95"
+checksum = "5183f17c87893af741661c9929841e75064fff2ebe296e4de45b4ab15e8ae22e"
 
 [[package]]
 name = "equivalent"
@@ -456,6 +456,7 @@ dependencies = [
  "coordinate-transformer",
  "fxhash",
  "indexmap",
+ "num",
  "ordered-float",
  "ply-rs",
  "vec-x",
