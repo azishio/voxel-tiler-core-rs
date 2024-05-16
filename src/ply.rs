@@ -5,17 +5,20 @@ use indexmap::IndexSet;
 use ordered_float::NotNan;
 use ply_rs::parser::Parser;
 use ply_rs::ply::{Addable, DefaultElement, ElementDef, Encoding, Ply, Property, PropertyAccess, PropertyDef, PropertyType, ScalarType};
-use ply_rs::ply::Property::{Float, Int, ListInt, UChar};
+use ply_rs::ply::Property::{Float, ListInt, UChar};
 use ply_rs::writer::Writer;
 use vec_x::VecX;
 
-use crate::VoxelMesh;
+use crate::{Point, VoxelMesh};
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 struct Vertex {
     x: NotNan<f32>,
     y: NotNan<f32>,
     z: NotNan<f32>,
+    r: u8,
+    g: u8,
+    b: u8,
 }
 
 impl PropertyAccess for Vertex {
@@ -28,17 +31,23 @@ impl PropertyAccess for Vertex {
             ("x", Float(v)) => self.x = NotNan::new(v).expect("Vertex: x is NaN"),
             ("y", Float(v)) => self.y = NotNan::new(v).expect("Vertex: x is NaN"),
             ("z", Float(v)) => self.z = NotNan::new(v).expect("Vertex: x is NaN"),
+            ("red", UChar(v)) => self.r = v,
+            ("green", UChar(v)) => self.g = v,
+            ("blue", UChar(v)) => self.b = v,
             (k, _) => panic!("Vertex: Unexpected key/value combination: key: {}", k),
         }
     }
 }
 
-impl From<VecX<f32, 3>> for Vertex {
-    fn from(v: VecX<f32, 3>) -> Self {
+impl From<(Point<f32>)> for Vertex {
+    fn from((coord, material_index): Point<f32>) -> Self {
         Vertex {
-            x: NotNan::new(v[0]).expect("Vertex: x is NaN"),
-            y: NotNan::new(v[1]).expect("Vertex: x is NaN"),
-            z: NotNan::new(v[2]).expect("Vertex: x is NaN"),
+            x: NotNan::new(coord[0]).expect("Vertex: x is NaN"),
+            y: NotNan::new(coord[1]).expect("Vertex: x is NaN"),
+            z: NotNan::new(coord[2]).expect("Vertex: x is NaN"),
+            r: material_index[0],
+            g: material_index[1],
+            b: material_index[2],
         }
     }
 }
@@ -78,7 +87,6 @@ impl From<VecX<u8, 3>> for Material {
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 struct Face {
     vertex_indices: Vec<i32>,
-    material_index: i32,
 }
 
 impl PropertyAccess for Face {
@@ -89,7 +97,6 @@ impl PropertyAccess for Face {
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
             ("vertex_index", ListInt(v)) => self.vertex_indices = v,
-            ("material_index", Int(v)) => self.material_index = v,
             (k, _) => panic!("Face: Unexpected key/value combination: key: {}", k),
         }
     }
@@ -98,23 +105,20 @@ impl PropertyAccess for Face {
 #[derive(Clone, Debug, Default)]
 pub struct PlyStructs {
     vertices: Vec<Vertex>,
-    materials: Vec<Material>,
     faces: Vec<Face>,
 }
 
 impl PlyStructs {
-    pub fn new(vertices: Vec<Vertex>, materials: Vec<Material>, faces: Vec<Face>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, faces: Vec<Face>) -> Self {
         Self {
             vertices,
-            materials,
             faces,
         }
     }
 
     pub fn merge(self, other: Self) -> Self {
-        let Self { vertices: vertexes, materials: colors, faces } = self;
+        let Self { vertices: vertexes, faces } = self;
         let mut vertex_set = IndexSet::<Vertex, FxBuildHasher>::from_iter(vertexes);
-        let mut material_set = IndexSet::<Material, FxBuildHasher>::from_iter(colors);
         let mut face_set = IndexSet::<Face, FxBuildHasher>::from_iter(faces);
 
         other.faces.into_iter().for_each(|face| {
@@ -124,14 +128,11 @@ impl PlyStructs {
                 vertex_set.insert_full(vertex).0 as i32
             }).collect::<Vec<_>>();
 
-            let color_index = material_set.insert_full(other.materials[face.material_index as usize]).0 as i32;
-
-            face_set.insert(Face { vertex_indices: vertex_index, material_index: color_index });
+            face_set.insert(Face { vertex_indices: vertex_index });
         });
 
         PlyStructs {
             vertices: vertex_set.into_iter().collect(),
-            materials: material_set.into_iter().collect(),
             faces: face_set.into_iter().collect(),
         }
     }
@@ -141,67 +142,59 @@ impl PlyStructs {
 
         let vertex_parser = Parser::<Vertex>::new();
         let face_parser = Parser::<Face>::new();
-        let material_parser = Parser::<Material>::new();
 
         let header = vertex_parser.read_header(&mut buf_reader).unwrap();
 
         let mut vertex_list = Vec::new();
         let mut face_list = Vec::new();
-        let mut material_list = Vec::new();
 
         header.elements.iter().for_each(|(_, element)| {
             match element.name.as_ref() {
                 "vertex" => vertex_list = vertex_parser.read_payload_for_element(&mut buf_reader, &element, &header).unwrap(),
                 "face" => face_list = face_parser.read_payload_for_element(&mut buf_reader, &element, &header).unwrap(),
-                "material" => material_list = material_parser.read_payload_for_element(&mut buf_reader, &element, &header).unwrap(),
                 _ => {}
             }
         });
 
-        Self::new(vertex_list, material_list, face_list)
+        Self::new(vertex_list, face_list)
     }
 
     pub fn from_voxel_mesh(voxel_mesh: VoxelMesh<f32>) -> Self {
         let VoxelMesh {
             vertices,
-            materials,
             face,
             ..
         } = voxel_mesh;
 
         let vertices = vertices.into_iter().map(Vertex::from).collect::<Vec<_>>();
-        let materials = materials.into_iter().map(Material::from).collect::<Vec<_>>();
-        let faces = face.into_iter().map(|(vertex_indices, material_index)| {
+        let faces = face.into_iter().map(|vertex_indices| {
             let vertex_indices = vertex_indices.into_iter().map(|i| i as i32).collect::<Vec<_>>();
-            let material_index = material_index as i32;
 
             Face {
                 vertex_indices,
-                material_index,
             }
         }).collect::<Vec<_>>();
 
 
         Self {
             vertices,
-            materials,
             faces,
         }
     }
 
     pub fn to_ascii_ply_buf(self) -> Vec<u8> {
-        self.to_buf(Encoding::Ascii)
+        self.into_buf(Encoding::Ascii)
     }
 
     pub fn to_binary_little_endian_ply_buf(self) -> Vec<u8> {
-        self.to_buf(Encoding::BinaryLittleEndian)
+        self.into_buf(Encoding::BinaryLittleEndian)
     }
 
     pub fn to_binary_big_endian_ply_buf(self) -> Vec<u8> {
-        self.to_buf(Encoding::BinaryBigEndian)
+        self.into_buf(Encoding::BinaryBigEndian)
     }
 
-    fn to_buf(self, encoding: Encoding) -> Vec<u8> {
+    fn into_buf(self, encoding: Encoding) -> Vec<u8> {
         let mut buf = Vec::<u8>::new();
 
         let mut ply = {
@@ -211,42 +204,33 @@ impl PlyStructs {
             // 要素の定義
             let mut vertex_element = ElementDef::new("vertex".to_string());
             [
-                PropertyDef::new("x".to_string(), PropertyType::Scalar(ScalarType::Double)),
-                PropertyDef::new("y".to_string(), PropertyType::Scalar(ScalarType::Double)),
-                PropertyDef::new("z".to_string(), PropertyType::Scalar(ScalarType::Double)),
+                PropertyDef::new("x".to_string(), PropertyType::Scalar(ScalarType::Float)),
+                PropertyDef::new("y".to_string(), PropertyType::Scalar(ScalarType::Float)),
+                PropertyDef::new("z".to_string(), PropertyType::Scalar(ScalarType::Float)),
+                PropertyDef::new("red".to_string(), PropertyType::Scalar(ScalarType::UChar)),
+                PropertyDef::new("green".to_string(), PropertyType::Scalar(ScalarType::UChar)),
+                PropertyDef::new("blue".to_string(), PropertyType::Scalar(ScalarType::UChar)),
             ].into_iter().for_each(|p| vertex_element.properties.add(p));
 
             let mut face_element = ElementDef::new("face".to_string());
             [
                 PropertyDef::new("vertex_indices".to_string(), PropertyType::List(ScalarType::UChar, ScalarType::Int)),
-                PropertyDef::new("material_index".to_string(), PropertyType::Scalar(ScalarType::Int)),
             ].into_iter().for_each(|p| face_element.properties.add(p));
 
-            let mut material_element = ElementDef::new("material".to_string());
-            [
-                PropertyDef::new("ambient_red".to_string(), PropertyType::Scalar(ScalarType::UChar)),
-                PropertyDef::new("ambient_green".to_string(), PropertyType::Scalar(ScalarType::UChar)),
-                PropertyDef::new("ambient_blue".to_string(), PropertyType::Scalar(ScalarType::UChar)),
-            ].into_iter().for_each(|p| material_element.properties.add(p));
-
-            [vertex_element, face_element, material_element]
+            [vertex_element, face_element]
                 .into_iter().for_each(|e| ply.header.elements.add(e));
 
             // データの追加
-            let vertex = self.vertices.into_iter().map(|Vertex { x, y, z }| {
-                DefaultElement::from_iter([("x".to_string(), Float(x.into_inner())), ("y".to_string(), Float(y.into_inner())), ("z".to_string(), Float(z.into_inner()))])
+            let vertex = self.vertices.into_iter().map(|Vertex { x, y, z, r, g, b }| {
+                DefaultElement::from_iter([
+                    ("x".to_string(), Float(x.into_inner())), ("y".to_string(), Float(y.into_inner())), ("z".to_string(), Float(z.into_inner())), ("red".to_string(), UChar(r)), ("green".to_string(), UChar(g)), ("blue".to_string(), UChar(b))])
             }).collect::<Vec<_>>();
             ply.payload.insert("vertex".to_string(), vertex);
 
-            let face = self.faces.into_iter().map(|Face { vertex_indices: vertex_index, material_index }| {
-                DefaultElement::from_iter([("vertex_indices".to_string(), ListInt(vertex_index)), ("material_index".to_string(), Int(material_index))])
+            let face = self.faces.into_iter().map(|Face { vertex_indices: vertex_index }| {
+                DefaultElement::from_iter([("vertex_indices".to_string(), ListInt(vertex_index))])
             }).collect::<Vec<_>>();
             ply.payload.insert("face".to_string(), face);
-
-            let material = self.materials.into_iter().map(|Material { r, g, b }| {
-                DefaultElement::from_iter([("ambient_red".to_string(), UChar(r)), ("ambient_green".to_string(), UChar(g)), ("ambient_blue".to_string(), UChar(b))])
-            }).collect::<Vec<_>>();
-            ply.payload.insert("material".to_string(), material);
 
             ply
         };

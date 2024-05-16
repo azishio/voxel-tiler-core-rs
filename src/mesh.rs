@@ -7,25 +7,23 @@ use indexmap::IndexSet;
 use num::Num;
 use vec_x::VecX;
 
-use crate::{RGB, VoxelCollection};
+use crate::{Point, VoxelCollection};
 
-type MaterialIndex = usize;
-type VertexIndices = Vec<usize>;
+pub type MaterialIndex = usize;
+pub type VertexIndices = Vec<usize>;
 
-type Coord<T: Num> = VecX<T, 3>;
+type Coord<T> = VecX<T, 3>;
 
 pub struct VoxelMesh<T: Num> {
-    pub vertices: Vec<Coord<T>>,
-    pub materials: Vec<RGB>,
-    pub face: Vec<(VertexIndices, MaterialIndex)>,
+    pub vertices: Vec<Point<T>>,
+    pub face: Vec<VertexIndices>,
     pub zoom_lv: ZoomLv,
 }
 
 impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
-    pub fn new(vertices: Vec<Coord<T>>, materials: Vec<RGB>, face: Vec<(VertexIndices, MaterialIndex)>, voxel_size: f32, zoom_lv: ZoomLv) -> Self {
+    pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>, zoom_lv: ZoomLv) -> Self {
         Self {
             vertices,
-            materials,
             face,
             zoom_lv,
         }
@@ -34,7 +32,6 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
     pub fn empty() -> Self {
         Self {
             vertices: Vec::new(),
-            materials: Vec::new(),
             face: Vec::new(),
             zoom_lv: ZoomLv::Lv0,
         }
@@ -45,8 +42,7 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
 
         let voxel_set = HashSet::<Coord<u32>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
 
-        let mut vertex_set = IndexSet::<Coord<u32>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
-        let mut material_set = IndexSet::<RGB, FxBuildHasher>::with_hasher(FxBuildHasher::default());
+        let mut vertex_set = IndexSet::<Point<u32>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
 
         // ここでメッシュを構成しながら、(頂点,マテリアル)のvecを作成する
         let face_list = voxels.into_iter().flat_map(|(pixel_coord, rgb)| {
@@ -67,33 +63,32 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
                 } else {
                     let vertex_list = vertexes.iter().map(|(dx, dy, dz)| Coord::new([x + dx, y + dy, z + dz]));
 
-                    let material_index = material_set.insert_full(rgb).0;
-                    let vertex_indices = vertex_list.map(|vertex| vertex_set.insert_full(vertex).0).collect::<Vec<_>>();
+                    let vertex_indices = vertex_list.map(|vertex| vertex_set.insert_full((vertex, rgb)).0).collect::<Vec<_>>();
 
-                    Some((vertex_indices, material_index))
+                    Some(vertex_indices)
                 }
             }).collect::<Vec<_>>()
         }).collect::<Vec<_>>();
 
         let vertices = vertex_set.into_iter().collect::<Vec<_>>();
-        let materials = material_set.into_iter().collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
-            materials,
             face: face_list,
             zoom_lv,
         }
     }
 
-    pub fn coordinate_transform<U: Num>(self, f: fn(Coord<T>, ZoomLv) -> Coord<U>) -> VoxelMesh<U> {
-        let Self { vertices, materials, face, zoom_lv } = self;
+    pub fn coordinate_transform<U: Num, F: Fn(Coord<T>, ZoomLv) -> Coord<U>>(self, f: F) -> VoxelMesh<U> {
+        let Self { vertices, face, zoom_lv } = self;
 
-        let vertices = vertices.into_iter().map(|v| f(v, self.zoom_lv)).collect::<Vec<_>>();
+        let vertices = vertices.into_iter().map(|(coord, material)| {
+            let coord = f(coord, self.zoom_lv);
+            (coord, material)
+        }).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
-            materials,
             face,
             zoom_lv,
         }

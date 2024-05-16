@@ -2,14 +2,13 @@ use std::collections::HashMap;
 
 use coordinate_transformer::pixel_ll::ZoomLv;
 use fxhash::FxBuildHasher;
-use num::Num;
 use vec_x::VecX;
 
-pub type Coord<T: Num> = VecX<T, 3>;
+pub type Coord<T> = VecX<T, 3>;
 pub type RGB = VecX<u8, 3>;
-pub type Point<T: Num> = (Coord<T>, RGB);
+pub type Point<T> = (Coord<T>, RGB);
 
-type SumRGB = VecX<u32, 3>;
+type SumRGB = VecX<usize, 3>;
 pub type TileIdx = VecX<u32, 2>;
 
 pub struct PixelPointCloud {
@@ -80,24 +79,28 @@ impl VoxelCollection {
         split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
             let PixelPointCloud { points, zoom_lv } = pixel_point_cloud;
 
-            let mut voxel_map = HashMap::<Coord<u32>, (u32, SumRGB), FxBuildHasher>::with_hasher(Default::default());
+            let mut voxel_map = HashMap::<Coord<u32>, (usize, SumRGB), FxBuildHasher>::with_hasher(Default::default());
 
             points.into_iter().for_each(|(pixel_coord, rgb)| {
-                let rgb = SumRGB::new([rgb[0] as u32, rgb[1] as u32, rgb[2] as u32]);
+                let rgb = SumRGB::new([rgb[0] as usize, rgb[1] as usize, rgb[2] as usize]);
 
                 voxel_map.entry(pixel_coord).and_modify(|(count, sum_rgb)| {
                     *sum_rgb += rgb;
                     *count += 1;
-                }).or_insert((1, Coord::new([0, 0, 0])));
+                }).or_insert((0, Coord::new([0, 0, 0])));
             });
 
-            let voxels = voxel_map.into_iter().map(|(pixel_coord, (count, sum_rgb))| {
+            let voxels = voxel_map.into_iter().filter_map(|(pixel_coord, (count, sum_rgb))| {
+                if count == 0 {
+                    return None;
+                }
+
                 let rgb = RGB::new([
                     (sum_rgb[0] / count) as u8,
                     (sum_rgb[1] / count) as u8,
                     (sum_rgb[2] / count) as u8,
                 ]);
-                (pixel_coord, rgb)
+                Some((pixel_coord, rgb))
             }).collect::<Vec<_>>();
 
             (tile_idx, Self { voxels, zoom_lv })
