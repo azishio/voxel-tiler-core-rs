@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::io::{BufReader, Seek};
+use std::io::{BufRead, Seek};
 
 use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolution, ZoomLv};
 use fxhash::FxBuildHasher;
@@ -18,8 +18,8 @@ pub struct VoxelTiler {}
 
 impl VoxelTiler {
     #[cfg(feature = "las")]
-    pub fn from_jpr_las<T: std::io::Read + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv_list: Vec<ZoomLv>, rotate: bool) -> Vec<(ZoomLv, Vec<VoxelTile>)> {
-        let mut reader = Reader::new(BufReader::new(las)).unwrap();
+    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv_list: Vec<ZoomLv>, rotate: bool) -> Vec<(ZoomLv, Vec<VoxelTile>)> {
+        let mut reader = Reader::new(las).unwrap();
 
 
         let zoom_lv_set = IndexSet::<ZoomLv, FxBuildHasher>::from_iter(zoom_lv_list);
