@@ -57,9 +57,9 @@ impl PropertyAccess for Material {
 
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
-            ("red", UChar(v)) => self.r = v,
-            ("green", UChar(v)) => self.g = v,
-            ("blue", UChar(v)) => self.b = v,
+            ("ambient_red", UChar(v)) => self.r = v,
+            ("ambient_green", UChar(v)) => self.g = v,
+            ("ambient_blue", UChar(v)) => self.b = v,
             (k, _) => panic!("RGB: Unexpected key/value combination: key: {}", k),
         }
     }
