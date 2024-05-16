@@ -96,7 +96,7 @@ impl PropertyAccess for Face {
 }
 
 #[derive(Clone, Debug, Default)]
-struct PlyStructs {
+pub struct PlyStructs {
     vertices: Vec<Vertex>,
     materials: Vec<Material>,
     faces: Vec<Face>,
@@ -189,12 +189,24 @@ impl PlyStructs {
         }
     }
 
-    pub fn to_buf(self) -> Vec<u8> {
+    pub fn to_ascii_ply_buf(self) -> Vec<u8> {
+        self.to_buf(Encoding::Ascii)
+    }
+
+    pub fn to_binary_little_endian_ply_buf(self) -> Vec<u8> {
+        self.to_buf(Encoding::BinaryLittleEndian)
+    }
+
+    pub fn to_binary_big_endian_ply_buf(self) -> Vec<u8> {
+        self.to_buf(Encoding::BinaryBigEndian)
+    }
+
+    fn to_buf(self, encoding: Encoding) -> Vec<u8> {
         let mut buf = Vec::<u8>::new();
 
         let mut ply = {
             let mut ply = Ply::<DefaultElement>::new();
-            ply.header.encoding = Encoding::BinaryLittleEndian;
+            ply.header.encoding = encoding;
 
             // 要素の定義
             let mut vertex_element = ElementDef::new("vertex".to_string());
