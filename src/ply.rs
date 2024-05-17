@@ -12,7 +12,7 @@ use vec_x::VecX;
 use crate::{Point, VoxelMesh};
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
-struct Vertex {
+pub struct Vertex {
     x: NotNan<f32>,
     y: NotNan<f32>,
     z: NotNan<f32>,
@@ -39,7 +39,7 @@ impl PropertyAccess for Vertex {
     }
 }
 
-impl From<(Point<f32>)> for Vertex {
+impl From<Point<f32>> for Vertex {
     fn from((coord, material_index): Point<f32>) -> Self {
         Vertex {
             x: NotNan::new(coord[0]).expect("Vertex: x is NaN"),
@@ -85,7 +85,7 @@ impl From<VecX<u8, 3>> for Material {
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
-struct Face {
+pub struct Face {
     vertex_indices: Vec<i32>,
 }
 
