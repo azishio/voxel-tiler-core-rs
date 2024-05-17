@@ -73,17 +73,17 @@ impl VoxelCollection {
         }
     }
 
-    pub fn from_pixel_point_cloud_with_tiling(point_cloud: PixelPointCloud) -> Vec<(TileIdx, Self)> {
+    pub fn from_pixel_point_cloud_with_tiling(point_cloud: PixelPointCloud, threshold: usize) -> Vec<(TileIdx, Self)> {
         let split_points = point_cloud.split_by_tile();
 
         split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
-            let voxel_collection = Self::from_pixel_point_cloud(pixel_point_cloud);
+            let voxel_collection = Self::from_pixel_point_cloud(pixel_point_cloud, threshold);
 
             (tile_idx, voxel_collection)
         }).collect::<Vec<_>>()
     }
 
-    pub fn from_pixel_point_cloud(pixel_point_cloud: PixelPointCloud) -> Self {
+    pub fn from_pixel_point_cloud(pixel_point_cloud: PixelPointCloud, threshold: usize) -> Self {
         let PixelPointCloud { points, zoom_lv } = pixel_point_cloud;
 
         let mut voxel_map = HashMap::<Coord<u32>, (usize, SumRGB), FxBuildHasher>::with_hasher(Default::default());
@@ -99,6 +99,9 @@ impl VoxelCollection {
 
         let voxels = voxel_map.into_iter().filter_map(|(pixel_coord, (count, sum_rgb))| {
             if count == 0 {
+                return None;
+            }
+            if count < threshold {
                 return None;
             }
 
