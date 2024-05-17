@@ -2,8 +2,6 @@ use std::fmt::Debug;
 use std::io::{BufRead, Seek};
 
 use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolution, ZoomLv};
-use fxhash::FxBuildHasher;
-use indexmap::IndexSet;
 #[cfg(feature = "las")]
 use las::{Color, Read, Reader};
 use vec_x::VecX;
@@ -20,47 +18,42 @@ pub struct Voxelizer {}
 
 impl Voxelizer {
     #[cfg(feature = "las")]
-    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv_list: Vec<ZoomLv>, rotate: bool) -> Vec<(ZoomLv, VoxelModel)> {
+    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv, threshold: usize, rotate: bool) -> VoxelModel {
         let mut reader = Reader::new(las).unwrap();
 
+        let points = reader.points().collect::<Vec<_>>();
 
-        let zoom_lv_set = IndexSet::<ZoomLv, FxBuildHasher>::from_iter(zoom_lv_list);
+        let jpr_points = points.into_iter().map(|wrapped_points| {
+            let point = wrapped_points.unwrap();
 
-        zoom_lv_set.into_iter().map(|zoom_lv| {
-            let jpr_points = reader.points().map(|wrapped_points| {
-                let point = wrapped_points.unwrap();
+            // 時々Lasファイルでのxが平面直角座標系のyになっていることがあるので、rotate引数で対応
+            let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
 
-                // 時々Lasファイルでのxが平面直角座標系のyになっていることがあるので、rotate引数で対応
-                let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
+            let (x, y) = ll2pixel((long, lat), zoom_lv);
 
-                let (x, y) = ll2pixel((long, lat), zoom_lv);
+            let pixel_resolution = pixel_resolution(lat, zoom_lv);
 
-                let pixel_resolution = pixel_resolution(lat, zoom_lv);
+            let z = (point.z / pixel_resolution) as u32;
 
-                let z = (point.z / pixel_resolution) as u32;
+            let color = point.color.unwrap_or(Color::new(0, 0, 0));
 
-                let color = point.color.unwrap_or(Color::new(0, 0, 0));
+            let r = (color.red / u8::MAX as u16) as u8;
+            let g = (color.green / u8::MAX as u16) as u8;
+            let b = (color.blue / u8::MAX as u16) as u8;
 
-                let r = (color.red / u8::MAX as u16) as u8;
-                let g = (color.green / u8::MAX as u16) as u8;
-                let b = (color.blue / u8::MAX as u16) as u8;
+            (Coord::new([x, y, z]), RGB::new([r, g, b]))
+        }).collect::<Vec<Point<u32>>>();
 
-                (Coord::new([x, y, z]), RGB::new([r, g, b]))
-            }).collect::<Vec<Point<u32>>>();
+        let point_cloud = PixelPointCloud::new(jpr_points, zoom_lv);
 
-            let point_cloud = PixelPointCloud::new(jpr_points, zoom_lv);
-
-            let voxel_tile = Self::from_pixel_point_cloud(point_cloud);
-
-            (zoom_lv, voxel_tile)
-        }).collect::<Vec<_>>()
+        Self::from_pixel_point_cloud(point_cloud, threshold)
     }
 
-    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> VoxelModel {
+    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud, threshold: usize) -> VoxelModel {
         let (min_x, min_y) = point_cloud.points.iter().fold((u32::MAX, u32::MAX), |(min_x, min_y), (pixel_coord, _)| (min_x.min(pixel_coord[0]), min_y.min(pixel_coord[1])));
         let min_tile_idx = VecX::new([min_x / 256, min_y / 256]);
 
-        let voxel_collection = VoxelCollection::from_pixel_point_cloud(point_cloud);
+        let voxel_collection = VoxelCollection::from_pixel_point_cloud(point_cloud, threshold);
 
         Self::from_voxel_collection(min_tile_idx, voxel_collection)
     }
