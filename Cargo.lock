@@ -106,9 +106,9 @@ dependencies = [
 
 [[package]]
 name = "coordinate-transformer"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5183f17c87893af741661c9929841e75064fff2ebe296e4de45b4ab15e8ae22e"
+checksum = "5664186ef6d88f5c0e1034e251348e169686306ba47abdc3a7ed48e65b386dd8"
 
 [[package]]
 name = "core-foundation-sys"
@@ -626,9 +626,9 @@ checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 
 [[package]]
 name = "vec-x"
-version = "0.2.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa915bd47198ef74caff5129b27f97bc8a99a188e612d28c8a868bbe84f6014f"
+checksum = "2d6825548e4e9ec32ea3f921a9f876dc30a4e6a9f1940f9488c6eaf04c8768ca"
 dependencies = [
  "fxhash",
  "indexmap",
