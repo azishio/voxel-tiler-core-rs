@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use coordinate_transformer::ZoomLv;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
 use num::Num;
@@ -17,15 +16,16 @@ type Coord<T> = VecX<T, 3>;
 pub struct VoxelMesh<T: Num> {
     pub vertices: Vec<Point<T>>,
     pub face: Vec<VertexIndices>,
-    pub zoom_lv: ZoomLv,
 }
 
-impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
-    pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>, zoom_lv: ZoomLv) -> Self {
+impl<T> VoxelMesh<T>
+    where
+        T: Num + Copy + Eq + Hash
+{
+    pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>) -> Self {
         Self {
             vertices,
             face,
-            zoom_lv,
         }
     }
 
@@ -33,12 +33,11 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
         Self {
             vertices: Vec::new(),
             face: Vec::new(),
-            zoom_lv: ZoomLv::Lv0,
         }
     }
 
     pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
-        let VoxelCollection { voxels, zoom_lv } = voxel_collection;
+        let voxels = voxel_collection.voxels;
 
         let voxel_set = HashSet::<Coord<u32>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
 
@@ -75,22 +74,24 @@ impl<T: Num + Copy + Eq + Hash> VoxelMesh<T> {
         VoxelMesh {
             vertices,
             face: face_list,
-            zoom_lv,
         }
     }
 
-    pub fn coordinate_transform<U: Num, F: Fn(Coord<T>, ZoomLv) -> Coord<U>>(self, f: F) -> VoxelMesh<U> {
-        let Self { vertices, face, zoom_lv } = self;
+    pub fn coordinate_transform<U, F>(self, f: F) -> VoxelMesh<U>
+        where
+            U: Num,
+            F: Fn(Coord<T>) -> Coord<U>,
+    {
+        let Self { vertices, face } = self;
 
         let vertices = vertices.into_iter().map(|(coord, material)| {
-            let coord = f(coord, self.zoom_lv);
+            let coord = f(coord);
             (coord, material)
         }).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
             face,
-            zoom_lv,
         }
     }
 }
