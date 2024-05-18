@@ -97,6 +97,63 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
     /// Generate a list of `VoxelMesh` from `VoxelPointCloud`
     ///
     /// `VoxelPointCloud`から、`VoxelMesh`のリストを生成する
+    #[cfg(feature = "rayon")]
+    pub fn voxelize(point_cloud: VoxelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
+        let min_voxel_coord = point_cloud.points.iter().fold(Coord::new([u32::MAX, u32::MAX, u32::MAX]), |min, (pixel_coord, _)| {
+            Coord::new([min[0].min(pixel_coord[0]), min[1].min(pixel_coord[1]), min[2].min(pixel_coord[2])])
+        });
+
+        let voxel_collection = if Params::TILING {
+            let split_points = point_cloud.split_by_tile();
+
+            split_points.into_par_iter().map(|(tile_idx, pixel_point_cloud)| {
+                let voxel_collection = VoxelCollection::from_voxel_point_cloud(pixel_point_cloud, Params::THRESHOLD);
+
+                (tile_idx, voxel_collection)
+            }).collect::<Vec<_>>()
+        } else {
+            let tile_idx = min_voxel_coord.fit() / 256_u32;
+
+            vec![(tile_idx, VoxelCollection::from_voxel_point_cloud(point_cloud, Params::THRESHOLD))]
+        };
+
+        let offset = match Params::OFFSET {
+            Offset::MinTile => ((min_voxel_coord.fit::<2>() / 256_u32) * 256_u32).fit(),
+            Offset::Pixel => Coord::new([min_voxel_coord[0], min_voxel_coord[1], 0]),
+            Offset::Voxel => min_voxel_coord,
+            _ => Coord::default(),
+        };
+
+        voxel_collection.into_par_iter().map(|(tile_idx, voxel_collection)| {
+            let zoom_lv = voxel_collection.zoom_lv;
+
+            let offset = if Params::OFFSET == Offset::Tile {
+                (tile_idx * 256_u32).fit()
+            } else {
+                offset
+            };
+
+            let callback = |(coord, rgb): Point<u32>| -> Point<f32>{
+                let voxel_size = {
+                    let (_, lat) = pixel2ll((coord[0], coord[1]), zoom_lv);
+                    pixel_resolution(lat, zoom_lv)
+                };
+
+                let coord = (coord - offset).as_() * voxel_size as f32;
+
+                (coord, rgb)
+            };
+
+            let voxel_mesh = VoxelMesh::<u32>::from_voxel_collection(voxel_collection).batch_to_vertices(callback);
+
+            (tile_idx, voxel_mesh)
+        }).collect::<Vec<_>>()
+    }
+
+    /// Generate a list of `VoxelMesh` from `VoxelPointCloud`
+    ///
+    /// `VoxelPointCloud`から、`VoxelMesh`のリストを生成する
+    #[cfg(not(feature = "rayon"))]
     pub fn voxelize(point_cloud: VoxelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
         let min_voxel_coord = point_cloud.points.iter().fold(Coord::new([u32::MAX, u32::MAX, u32::MAX]), |min, (pixel_coord, _)| {
             Coord::new([min[0].min(pixel_coord[0]), min[1].min(pixel_coord[1]), min[2].min(pixel_coord[2])])
