@@ -15,6 +15,8 @@ keywords = ["voxel", "point-cloud", "las", "ply"]
 categories = ["concurrency", "data-structures", "encoding", "mathematics", "science::geo"]
 license = "MIT OR Apache-2.0"
 
+exclude = ["examples", "benches"]
+
 [dependencies]
 coordinate-transformer = "1.5.0"
 fxhash = "0.2.1"
