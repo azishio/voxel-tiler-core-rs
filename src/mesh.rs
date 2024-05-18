@@ -16,7 +16,9 @@ type Coord<T> = VecX<T, 3>;
 ///
 /// a structure that holds information about the mesh representing the voxel
 #[derive(Clone, Debug)]
-pub struct VoxelMesh<T: Num> {
+pub struct VoxelMesh<T>
+    where T: Num + Sized + Send
+{
     /// 一意な(座標,色)のリスト
     ///
     /// Unique (coordinates,color) list
@@ -30,7 +32,7 @@ pub struct VoxelMesh<T: Num> {
 
 impl<T> VoxelMesh<T>
     where
-        T: Num + Copy + Eq + Hash
+        T: Num + Sized + Send + Copy + Eq + Hash
 {
     /// メッシュを生成する
     ///
@@ -102,14 +104,12 @@ impl<T> VoxelMesh<T>
     /// For example, it can be used to transform the coordinate system of a vertex.
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
-            U: Num,
+            U: Num + Sized + Send,
             F: Fn(Point<T>) -> Point<U>,
     {
         let Self { vertices, face } = self;
 
-        let vertices = vertices.into_iter().map(|point| {
-            f(point)
-        }).collect::<Vec<_>>();
+        let vertices = vertices.into_iter().map(f).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
