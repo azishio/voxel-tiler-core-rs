@@ -11,14 +11,24 @@ pub type Point<T> = (Coord<T>, RGB);
 pub type TileIdx = VecX<u32, 2>;
 
 /// ピクセル座標で表された点群を表す構造体
+///
+/// Structure representing a point cloud expressed in pixel coordinates
 pub struct VoxelPointCloud {
     /// 点群
+    ///
+    /// Point cloud
     pub points: Vec<Point<u32>>,
+
+    /// 点群のピクセル座標のズームレベル
+    ///
+    /// Zoom level of pixel coordinates of point cloud
     pub zoom_lv: ZoomLv,
 }
 
 impl VoxelPointCloud {
     /// 新しい`VoxelPointCloud`を生成します。
+    ///
+    /// Generate a new `VoxelPointCloud`
     pub fn new(points: Vec<Point<u32>>, zoom_lv: ZoomLv) -> Self {
         Self {
             points,
@@ -26,6 +36,11 @@ impl VoxelPointCloud {
         }
     }
 
+    /// 空の`VoxelPointCloud`を生成します。
+    /// データを内包しないため実用上の意味はありませんが、仮のコードを書く際に便利です。
+    ///
+    /// Generate an empty `VoxelPointCloud`.
+    /// It is not practically meaningful because it does not contain data, but it is useful when writing temporary code.
     pub fn empty() -> Self {
         Self {
             points: Vec::new(),
@@ -33,8 +48,9 @@ impl VoxelPointCloud {
         }
     }
 
-    pub(crate) fn split_by_tile(self) -> Vec<(TileIdx, PixelPointCloud)> {
-        let mut tiled_points = HashMap::<TileIdx, PixelPointCloud, FxBuildHasher>::with_hasher(Default::default());
+    /// タイルごとに分割した点群を返します。
+    ///
+    /// Returns the point cloud divided by tile.
     pub fn split_by_tile(self) -> Vec<(TileIdx, VoxelPointCloud)> {
         let mut tiled_points = HashMap::<TileIdx, VoxelPointCloud, FxBuildHasher>::with_hasher(Default::default());
 
@@ -54,14 +70,33 @@ impl VoxelPointCloud {
     }
 }
 
+/// ボクセル群を表す構造体。
+///
+/// Structure representing a group of voxels.
+///
+/// ボクセルとは、ピクセル座標における1ピクセル分の辺長を持つ立方体のことです。
+/// 分解能は緯度とピクセル座標のズームレベルに依存します。
+///
+/// A voxel is a cube with a side length of one pixel in pixel coordinates.
+/// Resolution depends on latitude and zoom level in pixel coordinates.
 pub struct VoxelCollection {
-    pub(crate) voxels: Vec<Point<u32>>,
-    pub(crate) zoom_lv: ZoomLv,
+    /// 一意な座標とRGB値のペアのリスト。
+    /// Pointが持つ座標値はユニークな値である必要があります。
+    ///
+    /// A list of unique coordinate and RGB value pairs.
+    /// The coordinate value held by Point must be unique.
     pub voxels: Vec<Point<u32>>,
+
+    /// ボクセル群のピクセル座標のズームレベル。
+    ///
+    /// Zoom level of pixel coordinates of voxel group.
     pub zoom_lv: ZoomLv,
 }
 
 impl VoxelCollection {
+    /// 新しい`VoxelCollection`を生成します。
+    ///
+    /// Generate a new `VoxelCollection`.
     pub fn new(
         voxels: Vec<Point<u32>>,
         zoom_lv: ZoomLv,
@@ -72,6 +107,11 @@ impl VoxelCollection {
         }
     }
 
+    /// 空の`VoxelCollection`を生成します。
+    /// データを内包しないため実用上の意味はありませんが、仮のコードを書く際に便利です。
+    ///
+    /// Generate an empty `VoxelCollection`.
+    /// It is not practically meaningful because it does not contain data, but it is useful when writing temporary code.
     pub fn empty() -> Self {
         Self {
             voxels: Vec::new(),
@@ -79,11 +119,9 @@ impl VoxelCollection {
         }
     }
 
-    pub fn from_pixel_point_cloud_with_tiling(point_cloud: PixelPointCloud, threshold: usize) -> Vec<(TileIdx, Self)> {
-        let split_points = point_cloud.split_by_tile();
-
-        split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
-            let voxel_collection = Self::from_pixel_point_cloud(pixel_point_cloud, threshold);
+    /// `VoxelPointCloud`から`VoxelCollection`を生成します。
+    ///
+    /// Generate a `VoxelCollection` from a `VoxelPointCloud`.
     pub fn from_voxel_point_cloud(voxel_point_cloud: VoxelPointCloud, threshold: usize) -> Self {
         type SumRGB = VecX<usize, 3>;
 

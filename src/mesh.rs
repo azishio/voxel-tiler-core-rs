@@ -8,13 +8,23 @@ use vec_x::VecX;
 
 use crate::{Point, VoxelCollection};
 
-pub type MaterialIndex = usize;
 pub type VertexIndices = Vec<usize>;
 
 type Coord<T> = VecX<T, 3>;
 
+/// ボクセルを表現するメッシュの情報を保持する構造体
+///
+/// a structure that holds information about the mesh representing the voxel
+#[derive(Clone, Debug)]
 pub struct VoxelMesh<T: Num> {
+    /// 一意な(座標,色)のリスト
+    ///
+    /// Unique (coordinates,color) list
     pub vertices: Vec<Point<T>>,
+
+    /// 面を構成する頂点のインデックスのリスト
+    ///
+    /// List of indices of the vertices that make up the face
     pub face: Vec<VertexIndices>,
 }
 
@@ -22,6 +32,9 @@ impl<T> VoxelMesh<T>
     where
         T: Num + Copy + Eq + Hash
 {
+    /// メッシュを生成する
+    ///
+    /// Generate a mesh
     pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>) -> Self {
         Self {
             vertices,
@@ -29,6 +42,9 @@ impl<T> VoxelMesh<T>
         }
     }
 
+    /// 空のメッシュを生成する
+    ///
+    /// Generate an empty mesh
     pub fn empty() -> Self {
         Self {
             vertices: Vec::new(),
@@ -36,6 +52,9 @@ impl<T> VoxelMesh<T>
         }
     }
 
+    /// ボクセルデータを、そのディティールを保持した四角形ポリゴンのリストに変換します。
+    ///
+    /// Converts voxel data into a list of rectangular polygons that retain their detail.
     pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
         let voxels = voxel_collection.voxels;
 
@@ -43,7 +62,6 @@ impl<T> VoxelMesh<T>
 
         let mut vertex_set = IndexSet::<Point<u32>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
 
-        // ここでメッシュを構成しながら、(頂点,マテリアル)のvecを作成する
         let face_list = voxels.into_iter().flat_map(|(pixel_coord, rgb)| {
             let x = pixel_coord[0];
             let y = pixel_coord[1];
@@ -77,6 +95,11 @@ impl<T> VoxelMesh<T>
         }
     }
 
+    /// 全ての頂点について、指定された関数を適用した結果を返します。
+    /// 例えば、頂点の座標系を変換する場合に使用できます。
+    ///
+    /// Returns the result of applying the specified function to all vertices.
+    /// For example, it can be used to transform the coordinate system of a vertex.
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
             U: Num,
