@@ -5,21 +5,8 @@ use std::io::{BufReader, Write};
 
 use coordinate_transformer::{JprOrigin, ZoomLv};
 
-use voxel_tiler::{Offset, PlyStructs, Voxelizer, VoxelizerParams};
-
-// Voxelizerのためのパラメータを設定する構造体
-// Structure that sets parameters for the Voxelizer
-struct Params;
-
-// パラメータの設定
-// パラメータについては`voxel_tiler::VoxelizerParam`のドキュメンテーションコメントを参照
-// Parameter Settings
-// See documentation comments on `voxel_tiler::VoxelizerParam` for parameters
-impl VoxelizerParams for Params {
-    const TILING: bool = false;
-    const THRESHOLD: usize = 5;
-    const OFFSET: Offset = Offset::Voxel;
-}
+use voxel_tiler::{PlyStructs, Voxelizer};
+use voxel_tiler::default_params::Tile;
 
 fn main() {
     // 出力先のディレクトリを作成
@@ -39,11 +26,9 @@ fn main() {
 
         // LASファイルからボクセルデータを生成
         // Generate voxel data from LAS files
-        let v = Voxelizer::<Params>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
+        let v = Voxelizer::<Tile>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
 
-        // ボクセルデータをPLYファイルに出力
         // VoxelizerParams::TILINGがfalseの場合、Voxelizerが返すVecの要素数は1である
-        // output voxel data to PLY file
         // If VoxelizerParams::TILING is false, the number of Vec elements returned by Voxelizer is 1
         let (_tile_idx, voxel_mesh) = v.into_iter().next().unwrap();
 
