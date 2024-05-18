@@ -1,4 +1,4 @@
-`data-source`内のファイルは長崎県により[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode.ja)
+`01JE2421.las`は長崎県により[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/legalcode.ja)
 でライセンスされています。
 
 配布サイト: [オープンナガサキ](https://opennagasaki.nerc.or.jp/)
