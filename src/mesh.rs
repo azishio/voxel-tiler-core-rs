@@ -77,16 +77,15 @@ impl<T> VoxelMesh<T>
         }
     }
 
-    pub fn coordinate_transform<U, F>(self, f: F) -> VoxelMesh<U>
+    pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
             U: Num,
-            F: Fn(Coord<T>) -> Coord<U>,
+            F: Fn(Point<T>) -> Point<U>,
     {
         let Self { vertices, face } = self;
 
-        let vertices = vertices.into_iter().map(|(coord, material)| {
-            let coord = f(coord);
-            (coord, material)
+        let vertices = vertices.into_iter().map(|point| {
+            f(point)
         }).collect::<Vec<_>>();
 
         VoxelMesh {

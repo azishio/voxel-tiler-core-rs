@@ -81,16 +81,18 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
                 offset
             };
 
-            let callback = |v: Coord<u32>| -> Coord<f32>{
+            let callback = |(coord, rgb): Point<u32>| -> Point<f32>{
                 let voxel_size = {
-                    let (_, lat) = pixel2ll((v[0], v[1]), zoom_lv);
+                    let (_, lat) = pixel2ll((coord[0], coord[1]), zoom_lv);
                     pixel_resolution(lat, zoom_lv)
                 };
 
-                (v - offset).as_() * voxel_size as f32
+                let coord = (coord - offset).as_() * voxel_size as f32;
+
+                (coord, rgb)
             };
 
-            let voxel_mesh = VoxelMesh::<u32>::from_voxel_collection(voxel_collection).coordinate_transform(callback);
+            let voxel_mesh = VoxelMesh::<u32>::from_voxel_collection(voxel_collection).batch_to_vertices(callback);
 
             (tile_idx, voxel_mesh)
         }).collect::<Vec<_>>()
