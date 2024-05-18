@@ -1,8 +1,8 @@
-extern crate voxel_tiler;
+extern crate voxel_tiler_core;
 
 use std::fs::File;
 
-use voxel_tiler::PlyStructs;
+use voxel_tiler_core::PlyStructs;
 
 fn main() {
     // Ascii PLY

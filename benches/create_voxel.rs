@@ -4,8 +4,8 @@ use std::io::BufReader;
 use coordinate_transformer::{JprOrigin, ZoomLv};
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use voxel_tiler::{PlyStructs, Voxelizer};
-use voxel_tiler::default_params::Tile;
+use voxel_tiler_core::{PlyStructs, Voxelizer};
+use voxel_tiler_core::default_params::Tile;
 
 fn create_voxel() {
     let require_zoom_lv = vec![ZoomLv::Lv17];

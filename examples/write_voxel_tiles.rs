@@ -1,12 +1,12 @@
-extern crate voxel_tiler;
+extern crate voxel_tiler_core;
 
 use std::fs::File;
 use std::io::{BufReader, Write};
 
 use coordinate_transformer::{JprOrigin, ZoomLv};
 
-use voxel_tiler::{PlyStructs, Voxelizer};
-use voxel_tiler::default_params::Tile;
+use voxel_tiler_core::{PlyStructs, Voxelizer};
+use voxel_tiler_core::default_params::Tile;
 
 fn main() {
     // 出力先のディレクトリを作成
