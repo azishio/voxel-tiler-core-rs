@@ -1,7 +1,19 @@
 [package]
 name = "voxel-tiler-core"
 version = "0.1.0"
+authors = ["azishio"]
 edition = "2021"
+description = "Convert point clouds to voxel data."
+
+documentation = "https://docs.rs/voxel-tiler-core"
+homepage = "https://crates.io/crates/voxel-tiler-core"
+repository = "https://github.com/azishio/voxel-tiler-core-rs"
+
+readme = "README.md"
+
+keywords = ["voxel", "point-cloud", "las", "ply"]
+categories = ["concurrency", "data-structures", "encoding", "mathematics", "science::geo"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 coordinate-transformer = "1.5.0"
