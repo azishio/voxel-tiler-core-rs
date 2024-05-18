@@ -26,8 +26,7 @@ The voxel data output by this crate is generated to fit a single pixel in the sp
 Normally, there are no pixel coordinates in the height direction, but this crate defines pixel coordinates in the height
 direction using the edge length of one pixel as the unit length.
 The edge length of one pixel is
-[coordinate_transformer::pixel_resolution](https://docs.rs/coordinate-transformer/1.5.0/coordinate_transformer/pixel_ll/fn.pixel_
-resolution.html)
+[coordinate_transformer::pixel_resolution](https://docs.rs/coordinate-transformer/1.5.0/coordinate_transformer/pixel_ll/fn.pixel_resolution.html)
 The length of one pixel is calculated by.
 
 ## Usage
