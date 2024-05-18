@@ -84,19 +84,20 @@ impl PlyStructs {
         }
     }
 
-    pub fn merge(self, other: Self) -> Self {
-        let Self { vertices: vertexes, faces } = self;
-        let mut vertex_set = IndexSet::<Vertex, FxBuildHasher>::from_iter(vertexes);
-        let mut face_set = IndexSet::<Face, FxBuildHasher>::from_iter(faces);
+    pub fn marge(ply_list: Vec<Self>) -> Self {
+        let mut vertex_set = IndexSet::<Vertex, FxBuildHasher>::with_hasher(FxBuildHasher::default());
+        let mut face_set = IndexSet::<Face, FxBuildHasher>::with_hasher(FxBuildHasher::default());
 
-        other.faces.into_iter().for_each(|face| {
-            let vertex_index = face.vertex_indices.into_iter().map(|i| {
-                let vertex = other.vertices[i as usize];
+        ply_list.into_iter().for_each(|ply| {
+            ply.faces.into_iter().for_each(|face| {
+                let vertex_index = face.vertex_indices.into_iter().map(|i| {
+                    let vertex = ply.vertices[i as usize];
 
-                vertex_set.insert_full(vertex).0 as i32
-            }).collect::<Vec<_>>();
+                    vertex_set.insert_full(vertex).0 as i32
+                }).collect::<Vec<_>>();
 
-            face_set.insert(Face { vertex_indices: vertex_index });
+                face_set.insert(Face { vertex_indices: vertex_index });
+            });
         });
 
         PlyStructs {
