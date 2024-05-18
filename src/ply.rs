@@ -11,14 +11,27 @@ use ply_rs::writer::Writer;
 use crate::{Point, VoxelMesh};
 
 /// Plyファイルにおける1つの頂点を表す構造体
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Vertex {
-    x: NotNan<f32>,
-    y: NotNan<f32>,
-    z: NotNan<f32>,
+    x: f32,
+    y: f32,
+    z: f32,
     r: u8,
     g: u8,
     b: u8,
+}
+
+impl FromIterator<HashableVertex> for Vec<Vertex> {
+    fn from_iter<T: IntoIterator<Item=HashableVertex>>(iter: T) -> Vec<Vertex> {
+        iter.into_iter().map(|v| Vertex {
+            x: v.x.into_inner(),
+            y: v.y.into_inner(),
+            z: v.z.into_inner(),
+            r: v.r,
+            g: v.g,
+            b: v.b,
+        }).collect()
+    }
 }
 
 impl PropertyAccess for Vertex {
@@ -28,9 +41,9 @@ impl PropertyAccess for Vertex {
 
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
-            ("x", Float(v)) => self.x = NotNan::new(v).expect("Vertex: x is NaN"),
-            ("y", Float(v)) => self.y = NotNan::new(v).expect("Vertex: x is NaN"),
-            ("z", Float(v)) => self.z = NotNan::new(v).expect("Vertex: x is NaN"),
+            ("x", Float(v)) => self.x = v,
+            ("y", Float(v)) => self.y = v,
+            ("z", Float(v)) => self.z = v,
             ("red", UChar(v)) => self.r = v,
             ("green", UChar(v)) => self.g = v,
             ("blue", UChar(v)) => self.b = v,
@@ -42,12 +55,35 @@ impl PropertyAccess for Vertex {
 impl From<Point<f32>> for Vertex {
     fn from((coord, material_index): Point<f32>) -> Self {
         Vertex {
-            x: NotNan::new(coord[0]).expect("Vertex: x is NaN"),
-            y: NotNan::new(coord[1]).expect("Vertex: x is NaN"),
-            z: NotNan::new(coord[2]).expect("Vertex: x is NaN"),
+            x: coord[0],
+            y: coord[1],
+            z: coord[2],
             r: material_index[0],
             g: material_index[1],
             b: material_index[2],
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
+struct HashableVertex {
+    x: NotNan<f32>,
+    y: NotNan<f32>,
+    z: NotNan<f32>,
+    r: u8,
+    g: u8,
+    b: u8,
+}
+
+impl From<Vertex> for HashableVertex {
+    fn from(Vertex { x, y, z, r, g, b }: Vertex) -> Self {
+        HashableVertex {
+            x: NotNan::new(x).expect("x is NaN"),
+            y: NotNan::new(y).expect("y is NaN"),
+            z: NotNan::new(z).expect("z is NaN"),
+            r,
+            g,
+            b,
         }
     }
 }
@@ -87,14 +123,15 @@ impl PlyStructs {
         }
     }
 
+    /// 複数のPlyStructsをマージして1つのPlyStructsを生成
     pub fn marge(ply_list: Vec<Self>) -> Self {
-        let mut vertex_set = IndexSet::<Vertex, FxBuildHasher>::with_hasher(FxBuildHasher::default());
+        let mut vertex_set = IndexSet::<HashableVertex, FxBuildHasher>::with_hasher(FxBuildHasher::default());
         let mut face_set = IndexSet::<Face, FxBuildHasher>::with_hasher(FxBuildHasher::default());
 
         ply_list.into_iter().for_each(|ply| {
             ply.faces.into_iter().for_each(|face| {
                 let vertex_indices = face.vertex_indices.into_iter().map(|i| {
-                    let vertex = ply.vertices[i as usize];
+                    let vertex = ply.vertices[i as usize].into();
 
                     vertex_set.insert_full(vertex).0 as u32
                 }).collect::<Vec<_>>();
@@ -200,7 +237,7 @@ impl PlyStructs {
             // データの追加
             let vertex = self.vertices.into_iter().map(|Vertex { x, y, z, r, g, b }| {
                 DefaultElement::from_iter([
-                    ("x".to_string(), Float(x.into_inner())), ("y".to_string(), Float(y.into_inner())), ("z".to_string(), Float(z.into_inner())), ("red".to_string(), UChar(r)), ("green".to_string(), UChar(g)), ("blue".to_string(), UChar(b))])
+                    ("x".to_string(), Float(x)), ("y".to_string(), Float(y)), ("z".to_string(), Float(z)), ("red".to_string(), UChar(r)), ("green".to_string(), UChar(g)), ("blue".to_string(), UChar(b))])
             }).collect::<Vec<_>>();
             ply.payload.insert("vertex".to_string(), vertex);
 
