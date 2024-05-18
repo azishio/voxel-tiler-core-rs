@@ -29,6 +29,18 @@ ply-rs = "0.1.3"
 rayon = { version = "1.10.0", optional = true }
 vec-x = "0.7.0"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = { version = "0.5", optional = true }
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[features]
+default = []
+rayon = ["dep:rayon", "laz/parallel", "las/laz-parallel"]
+jamalloc = ["dep:tikv-jemallocator"]
+print-warning = []
+
 [[example]]
 name = "write_voxel_tiles"
 path = "examples/write_voxel_tiles.rs"
@@ -44,13 +56,6 @@ name = "read_ply"
 path = "examples/read_ply.rs"
 required-features = ["las", "print-warning"]
 
-[features]
-default = []
-rayon = ["dep:rayon", "laz/parallel", "las/laz-parallel"]
-print-warning = []
-
-[dev-dependencies]
-criterion = "0.5.1"
 
 [[bench]]
 name = "create_voxel"
@@ -59,7 +64,7 @@ harness = false
 required-features = ["las"]
 
 [[bench]]
-name = "create_voxel_par"
-path = "benches/create_voxel.rs"
+name = "par_create_voxel"
+path = "benches/par_create_voxel.rs"
 harness = false
 required-features = ["rayon", "las"]
