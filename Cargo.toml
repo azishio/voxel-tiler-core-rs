@@ -27,3 +27,7 @@ required-features = ["las"]
 [[example]]
 name = "read_ply"
 path = "examples/read_ply.rs"
+
+[features]
+default = ["print-warning"]
+print-warning = []
