@@ -367,6 +367,7 @@ checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
  "hashbrown",
+ "rayon",
 ]
 
 [[package]]
@@ -896,6 +897,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "voxel-tiler-core"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "coordinate-transformer",
  "criterion",
  "fxhash",
