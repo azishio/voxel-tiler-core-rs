@@ -2,6 +2,8 @@ English | [日本語](README.ja.md)
 
 # voxel-tiler-core
 
+![voxel](https://github.com/azishio/voxel-tiler-core-rs/assets/127939746/2c1402c1-03a1-4c05-af64-daa3ea2976a0)
+
 A fast point cloud voxelization library written in Rust.
 This crate provides the ability to convert point cloud data into ply files representing voxel meshes.
 It also exposes functions related to intermediate processing, so you can partially implement your own implementation if
