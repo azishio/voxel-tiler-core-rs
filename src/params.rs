@@ -46,7 +46,7 @@ pub enum Offset {
 /// # Examples
 ///
 /// ```
-/// use voxel_tiler::{VoxelizerParams, Offset};
+/// use voxel_tiler_core::{VoxelizerParams, Offset};
 ///
 /// pub struct MyParams;
 ///
