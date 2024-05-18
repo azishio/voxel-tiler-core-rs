@@ -1,6 +1,7 @@
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Offset {
     Tile,
+    MinTile,
     Pixel,
     Voxel,
 }
@@ -8,7 +9,6 @@ pub enum Offset {
 pub trait VoxelizerParam {
     const TILING: bool;
     const THRESHOLD: usize;
-    const ROTATE: bool;
     const OFFSET: Offset;
 }
 
@@ -20,7 +20,6 @@ pub mod default_params {
     impl VoxelizerParam for Tile {
         const TILING: bool = true;
         const THRESHOLD: usize = 1;
-        const ROTATE: bool = false;
         const OFFSET: Offset = Offset::Tile;
     }
 
@@ -29,7 +28,6 @@ pub mod default_params {
     impl VoxelizerParam for Fit {
         const TILING: bool = false;
         const THRESHOLD: usize = 1;
-        const ROTATE: bool = false;
         const OFFSET: Offset = Offset::Voxel;
     }
 }

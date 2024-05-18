@@ -20,7 +20,9 @@ pub struct Voxelizer<Params: VoxelizerParam = default_params::Fit> {
 
 impl<Params: VoxelizerParam> Voxelizer<Params> {
     #[cfg(feature = "las")]
-    pub fn from_jpr_las<T: BufRead + Seek + Send + Debug>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv) -> Vec<(TileIdx, VoxelMesh<f32>)> {
+    pub fn voxelize_from_jpr_las<T>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv, rotate: bool) -> Vec<(TileIdx, VoxelMesh<f32>)>
+        where T: BufRead + Seek + Send + Debug,
+    {
         let mut reader = Reader::new(las).unwrap();
 
         let points = reader.points().collect::<Vec<_>>();
@@ -28,7 +30,7 @@ impl<Params: VoxelizerParam> Voxelizer<Params> {
         let jpr_points = points.into_iter().map(|wrapped_points| {
             let point = wrapped_points.unwrap();
 
-            let (long, lat) = if !Params::ROTATE { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
+            let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
 
             let (x, y) = ll2pixel((long, lat), zoom_lv);
 
@@ -47,10 +49,10 @@ impl<Params: VoxelizerParam> Voxelizer<Params> {
 
         let point_cloud = PixelPointCloud::new(jpr_points, zoom_lv);
 
-        Self::from_pixel_point_cloud(point_cloud)
+        Self::voxelize(point_cloud)
     }
 
-    pub fn from_pixel_point_cloud(point_cloud: PixelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
+    pub fn voxelize(point_cloud: PixelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
         let min_voxel_coord = point_cloud.points.iter().fold(Coord::new([u32::MAX, u32::MAX, u32::MAX]), |min, (pixel_coord, _)| {
             Coord::new([min[0].min(pixel_coord[0]), min[1].min(pixel_coord[1]), min[2].min(pixel_coord[2])])
         });
@@ -58,20 +60,26 @@ impl<Params: VoxelizerParam> Voxelizer<Params> {
         let voxel_collection = if Params::TILING {
             VoxelCollection::from_pixel_point_cloud_with_tiling(point_cloud, Params::THRESHOLD)
         } else {
-            let tile_idx = min_voxel_coord / 256_u32;
-            let tile_idx = TileIdx::new([tile_idx[0], tile_idx[1]]);
+            let tile_idx = min_voxel_coord.fit() / 256_u32;
 
             vec![(tile_idx, VoxelCollection::from_pixel_point_cloud(point_cloud, Params::THRESHOLD))]
         };
 
         let offset = match Params::OFFSET {
-            Offset::Tile => Coord::new([(min_voxel_coord[0] / 256) * 256, (min_voxel_coord[1] / 256) * 256, 0]),
+            Offset::MinTile => ((min_voxel_coord.fit::<2>() / 256_u32) * 256_u32).fit(),
             Offset::Pixel => Coord::new([min_voxel_coord[0], min_voxel_coord[1], 0]),
             Offset::Voxel => min_voxel_coord,
+            _ => Coord::default(),
         };
 
         voxel_collection.into_iter().map(|(tile_idx, voxel_collection)| {
             let zoom_lv = voxel_collection.zoom_lv;
+
+            let offset = if Params::OFFSET == Offset::Tile {
+                (tile_idx * 256_u32).fit()
+            } else {
+                offset
+            };
 
             let callback = |v: Coord<u32>| -> Coord<f32>{
                 let voxel_size = {
