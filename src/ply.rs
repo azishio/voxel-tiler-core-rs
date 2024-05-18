@@ -47,7 +47,7 @@ impl PropertyAccess for Vertex {
             ("red", UChar(v)) => self.r = v,
             ("green", UChar(v)) => self.g = v,
             ("blue", UChar(v)) => self.b = v,
-            (k, _) => panic!("Vertex: Unexpected key/value combination: key: {}", k),
+            (k, _) => println!("[warn] Vertex: Unexpected key/value combination: key: {}", k),
         }
     }
 }
@@ -102,7 +102,7 @@ impl PropertyAccess for Face {
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
             ("vertex_indices", ListUInt(v)) => self.vertex_indices = v,
-            (k, _) => panic!("Face: Unexpected key/value combination: key: {}", k),
+            (k, _) => println!("[warn] Face: Unexpected key/value combination: key: {}", k),
         }
     }
 }
