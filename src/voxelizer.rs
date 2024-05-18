@@ -10,14 +10,15 @@ use rayon::prelude::*;
 
 use crate::{Coord, default_params, Offset, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh, VoxelPointCloud};
 
-///　本クレートを使用してボクセルデータを作成するリファレンス実装です。
-/// 単純な用途であればこの構造体を使用できますが、より高度な処理を行いたい場合は、独自の実装が必要になります。
-///
 /// The reference implementation for creating voxel data using this crate.
 /// You can use this structure for simple applications, but you will need your own implementation if you want to perform more advanced processing.
 ///
-/// 使用例は`examples/`にあります。
+///　本クレートを使用してボクセルデータを作成するリファレンス実装です。
+/// 単純な用途であればこの構造体を使用できますが、より高度な処理を行いたい場合は、独自の実装が必要になります。
+///
 /// Examples are available in `examples/`.
+///
+/// 使用例は`examples/`にあります。
 pub struct Voxelizer<Params: VoxelizerParams = default_params::Fit> {
     _param: PhantomData<Params>,
 }
@@ -93,9 +94,9 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
         Self::voxelize(point_cloud)
     }
 
-    /// `VoxelPointCloud`から、`VoxelMesh`のリストを生成する
-    ///
     /// Generate a list of `VoxelMesh` from `VoxelPointCloud`
+    ///
+    /// `VoxelPointCloud`から、`VoxelMesh`のリストを生成する
     pub fn voxelize(point_cloud: VoxelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
         let min_voxel_coord = point_cloud.points.iter().fold(Coord::new([u32::MAX, u32::MAX, u32::MAX]), |min, (pixel_coord, _)| {
             Coord::new([min[0].min(pixel_coord[0]), min[1].min(pixel_coord[1]), min[2].min(pixel_coord[2])])

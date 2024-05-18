@@ -14,21 +14,21 @@ pub type VertexIndices = Vec<usize>;
 
 type Coord<T> = VecX<T, 3>;
 
-/// ボクセルを表現するメッシュの情報を保持する構造体
-///
 /// a structure that holds information about the mesh representing the voxel
+///
+/// ボクセルを表現するメッシュの情報を保持する構造体
 #[derive(Clone, Debug)]
 pub struct VoxelMesh<T>
     where T: Num + Sized + Send
 {
-    /// 一意な(座標,色)のリスト
-    ///
     /// Unique (coordinates,color) list
+    ///
+    /// 一意な(座標,色)のリスト
     pub vertices: Vec<Point<T>>,
 
-    /// 面を構成する頂点のインデックスのリスト
-    ///
     /// List of indices of the vertices that make up the face
+    ///
+    /// 面を構成する頂点のインデックスのリスト
     pub face: Vec<VertexIndices>,
 }
 
@@ -36,9 +36,9 @@ impl<T> VoxelMesh<T>
     where
         T: Num + Sized + Send + Copy + Eq + Hash
 {
-    /// メッシュを生成する
-    ///
     /// Generate a mesh
+    ///
+    /// メッシュを生成する
     pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>) -> Self {
         Self {
             vertices,
@@ -46,9 +46,9 @@ impl<T> VoxelMesh<T>
         }
     }
 
-    /// 空のメッシュを生成する
-    ///
     /// Generate an empty mesh
+    ///
+    /// 空のメッシュを生成する
     pub fn empty() -> Self {
         Self {
             vertices: Vec::new(),
@@ -56,9 +56,9 @@ impl<T> VoxelMesh<T>
         }
     }
 
-    /// ボクセルデータを、そのディティールを保持した四角形ポリゴンのリストに変換します。
-    ///
     /// Converts voxel data into a list of rectangular polygons that retain their detail.
+    ///
+    /// ボクセルデータを、そのディティールを保持した四角形ポリゴンのリストに変換します。
     pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
         let voxels = voxel_collection.voxels;
 
@@ -99,11 +99,11 @@ impl<T> VoxelMesh<T>
         }
     }
 
-    /// 全ての頂点について、指定された関数を適用した結果を返します。
-    /// 例えば、頂点の座標系を変換する場合に使用できます。
-    ///
     /// Returns the result of applying the specified function to all vertices.
     /// For example, it can be used to transform the coordinate system of a vertex.
+    ///
+    /// 全ての頂点について、指定された関数を適用した結果を返します。
+    /// 例えば、頂点の座標系を変換する場合に使用できます。
     #[cfg(not(feature = "rayon"))]
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
@@ -120,11 +120,11 @@ impl<T> VoxelMesh<T>
         }
     }
 
-    /// 全ての頂点について、指定された関数を適用した結果を返します。
-    /// 例えば、頂点の座標系を変換する場合に使用できます。
-    ///
     /// Returns the result of applying the specified function to all vertices.
     /// For example, it can be used to transform the coordinate system of a vertex.
+    ///
+    /// 全ての頂点について、指定された関数を適用した結果を返します。
+    /// 例えば、頂点の座標系を変換する場合に使用できます。
     #[cfg(feature = "rayon")]
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where

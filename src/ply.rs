@@ -12,9 +12,9 @@ use rayon::prelude::*;
 
 use crate::{Point, VertexIndices, VoxelMesh};
 
-/// Plyファイルにおける1つの頂点を表す構造体
-///
 /// Structure representing a single vertex in a Ply file
+///
+/// Plyファイルにおける1つの頂点を表す構造体
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Vertex {
     x: f32,
@@ -92,9 +92,9 @@ impl From<Vertex> for HashableVertex {
     }
 }
 
-/// Plyファイルにおける1つの面を表す構造体
-///
 /// Structure representing a single face in a Ply file
+///
+/// Plyファイルにおける1つの面を表す構造体
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Face {
     vertex_indices: Vec<u32>,
@@ -113,9 +113,9 @@ impl PropertyAccess for Face {
     }
 }
 
-/// Ply形式のデータを生成するために必要な情報を持つ構造体
-///
 /// Structure with information necessary to generate Ply format data
+///
+/// Ply形式のデータを生成するために必要な情報を持つ構造体
 #[derive(Clone, Debug, Default)]
 pub struct PlyStructs {
     vertices: Vec<Vertex>,
@@ -123,9 +123,9 @@ pub struct PlyStructs {
 }
 
 impl PlyStructs {
-    /// 頂点と面を指定してPlyStructsを生成
-    ///
     /// Generate PlyStructs with vertices and faces
+    ///
+    /// 頂点と面を指定してPlyStructsを生成
     pub fn new(vertices: Vec<Vertex>, faces: Vec<Face>) -> Self {
         Self {
             vertices,
@@ -133,15 +133,15 @@ impl PlyStructs {
         }
     }
 
-    /// 複数のPlyStructsをマージして1つのPlyStructsを生成
-    ///
     /// Merge multiple PlyStructs into a single PlyStruct
+    ///
+    /// 複数のPlyStructsをマージして1つのPlyStructsを生成
     ///
     /// # Example
     ///
     /// ```
     /// use std::fs::File;
-    /// use voxel_tiler::PlyStructs;
+    /// use voxel_tiler_core::PlyStructs;
     ///
     /// let file = File::open("examples/data-source/box.ply").unwrap();
     /// let box_ply = PlyStructs::from_ply(file);
@@ -173,16 +173,16 @@ impl PlyStructs {
         }
     }
 
-    /// Plyのフォーマットに沿ったデータからPlyStructsを生成
-    ///
     /// Generate PlyStructs from data according to Ply format
+    ///
+    /// Plyのフォーマットに沿ったデータからPlyStructsを生成
     ///
     /// # Example
     ///
     /// ```
     ///  // Ascii PLY
     ///  use std::fs::File;
-    ///  use voxel_tiler::PlyStructs;
+    ///  use voxel_tiler_core::PlyStructs;
     ///
     ///  let file = File::open("examples/data-source/box.ply").unwrap();
     ///  let ascii_ply = PlyStructs::from_ply(file);
@@ -196,15 +196,9 @@ impl PlyStructs {
     ///  let ply_by_buf = PlyStructs::from_ply(file.as_slice());
     /// ```
     ///
-    /// 対応していないプロパティは警告をプリントして無視されます。
-    /// 警告をプリントさせたくない場合は、`print-warning`featureフラグをおろしてください。
-    ///
-    /// Unsupported properties will print a warning and be ignored.
-    /// If you do not want warnings to be printed, please turn off the `print-warning` feature flag.
+    /// For actual behavior, see `examples/read_ply.rs`.
     ///
     /// 実際の動作は`examples/read_ply.rs`を参照してください。
-    ///
-    /// For actual behavior, see `examples/read_ply.rs`.
     pub fn from_ply<T: Read>(file: T) -> Self {
         let mut buf_reader = BufReader::new(file);
 
@@ -227,9 +221,9 @@ impl PlyStructs {
         Self::new(vertex_list, face_list)
     }
 
-    /// VoxelMeshからPlyStructsを生成
-    ///
     /// Generate PlyStructs from VoxelMesh
+    ///
+    /// VoxelMeshからPlyStructsを生成
     #[cfg(not(feature = "rayon"))]
     pub fn from_voxel_mesh(voxel_mesh: VoxelMesh<f32>) -> Self {
         let VoxelMesh {
@@ -255,9 +249,9 @@ impl PlyStructs {
         }
     }
 
-    /// VoxelMeshからPlyStructsを生成
-    ///
     /// Generate PlyStructs from VoxelMesh
+    ///
+    /// VoxelMeshからPlyStructsを生成
     #[cfg(feature = "rayon")]
     pub fn from_voxel_mesh(voxel_mesh: VoxelMesh<f32>) -> Self {
         let VoxelMesh {
@@ -284,29 +278,29 @@ impl PlyStructs {
         }
     }
 
-    /// Ascii形式のPlyファイルのバッファを生成。
-    /// バッファをファイルとして書き込む例は`examples/write_voxel.rs`を参照してください。
-    ///
     /// Generate buffer for Ply file in Ascii format.
     /// See `examples/write_voxel.rs` for an example of writing a buffer as a file.
+    ///
+    /// Ascii形式のPlyファイルのバッファを生成。
+    /// バッファをファイルとして書き込む例は`examples/write_voxel.rs`を参照してください。
     pub fn to_ascii_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::Ascii)
     }
 
-    /// バイナリ(リトルエディアン)形式のPlyファイルのバッファを生成する。
-    /// ファイルへの書き込み方法は`to_ascii_ply_buf`と同様です。
-    ///
     /// Generate a buffer for a Ply file in binary (little edian) format.
     /// The method of writing to the file is the same as `to_ascii_ply_buf`.
+    ///
+    /// バイナリ(リトルエディアン)形式のPlyファイルのバッファを生成する。
+    /// ファイルへの書き込み方法は`to_ascii_ply_buf`と同様です。
     pub fn to_binary_little_endian_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::BinaryLittleEndian)
     }
 
-    /// バイナリ(ビッグエディアン)形式のPlyファイルのバッファを生成する。
-    /// ファイルへの書き込み方法は`to_ascii_ply_buf`と同様です。
-    ///
     /// Generate a buffer for a Ply file in binary (bigedian) format.
     /// The method of writing to the file is the same as `to_ascii_ply_buf`.
+    ///
+    /// バイナリ(ビッグエディアン)形式のPlyファイルのバッファを生成する。
+    /// ファイルへの書き込み方法は`to_ascii_ply_buf`と同様です。
     pub fn to_binary_big_endian_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::BinaryBigEndian)
     }
