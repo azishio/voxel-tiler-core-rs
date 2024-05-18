@@ -20,7 +20,7 @@ fn main() {
     let ply_by_buf = PlyStructs::from_ply(file.as_slice());
     println!("{:?}", ply_by_buf);
 
-    // 対応していないプロパティは警告をプリントして無視されます。
+    // 対応していないプロパティや要素は警告をプリントして無視されます。
     // 警告をプリントさせたくない場合は、`print-warning`featureフラグをおろしてください。
     // Unsupported properties will print a warning and be ignored.
     // If you do not want warnings to be printed, please turn off the `print-warning` feature flag.

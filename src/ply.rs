@@ -177,6 +177,16 @@ impl PlyStructs {
     ///
     /// Plyのフォーマットに沿ったデータからPlyStructsを生成
     ///
+    /// Unsupported properties and elements are ignored, with warnings printed.
+    /// If you set the `print-warning` feature flag, it will explicitly print that it has been ignored.
+    ///
+    /// 対応していないプロパティや要素は警告をプリントして無視されます。
+    /// `print-warning`featureフラグ立てると無視したことを明示的にprintします。
+    ///
+    /// For actual behavior, see `examples/read_ply.rs`.
+    ///
+    /// 実際の動作は`examples/read_ply.rs`を参照してください。
+    ///
     /// # Example
     ///
     /// ```
