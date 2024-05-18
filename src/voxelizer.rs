@@ -6,7 +6,7 @@ use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolu
 #[cfg(feature = "las")]
 use las::{Color, Read, Reader};
 
-use crate::{Coord, default_params, Offset, PixelPointCloud, Point, RGB, TileIdx, VoxelCollection, VoxelizerParam, VoxelMesh};
+use crate::{Coord, default_params, Offset, PixelPointCloud, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh};
 
 pub struct VoxelModel {
     pub voxel_mesh: VoxelMesh<f32>,
@@ -14,11 +14,11 @@ pub struct VoxelModel {
 }
 
 
-pub struct Voxelizer<Params: VoxelizerParam = default_params::Fit> {
+pub struct Voxelizer<Params: VoxelizerParams = default_params::Fit> {
     _param: PhantomData<Params>,
 }
 
-impl<Params: VoxelizerParam> Voxelizer<Params> {
+impl<Params: VoxelizerParams> Voxelizer<Params> {
     #[cfg(feature = "las")]
     pub fn voxelize_from_jpr_las<T>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv, rotate: bool) -> Vec<(TileIdx, VoxelMesh<f32>)>
         where T: BufRead + Seek + Send + Debug,

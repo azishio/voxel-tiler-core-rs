@@ -6,7 +6,7 @@ pub enum Offset {
     Voxel,
 }
 
-pub trait VoxelizerParam {
+pub trait VoxelizerParams {
     const TILING: bool;
     const THRESHOLD: usize;
     const OFFSET: Offset;
@@ -17,7 +17,7 @@ pub mod default_params {
 
     pub struct Tile;
 
-    impl VoxelizerParam for Tile {
+    impl VoxelizerParams for Tile {
         const TILING: bool = true;
         const THRESHOLD: usize = 1;
         const OFFSET: Offset = Offset::Tile;
@@ -25,7 +25,7 @@ pub mod default_params {
 
     pub struct Fit;
 
-    impl VoxelizerParam for Fit {
+    impl VoxelizerParams for Fit {
         const TILING: bool = false;
         const THRESHOLD: usize = 1;
         const OFFSET: Offset = Offset::Voxel;
