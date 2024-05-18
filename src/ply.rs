@@ -52,38 +52,6 @@ impl From<Point<f32>> for Vertex {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
-struct Material {
-    r: u8,
-    g: u8,
-    b: u8,
-}
-
-impl PropertyAccess for Material {
-    fn new() -> Self {
-        Material::default()
-    }
-
-    fn set_property(&mut self, key: String, property: Property) {
-        match (key.as_ref(), property) {
-            ("ambient_red", UChar(v)) => self.r = v,
-            ("ambient_green", UChar(v)) => self.g = v,
-            ("ambient_blue", UChar(v)) => self.b = v,
-            (k, _) => panic!("RGB: Unexpected key/value combination: key: {}", k),
-        }
-    }
-}
-
-impl From<VecX<u8, 3>> for Material {
-    fn from(v: VecX<u8, 3>) -> Self {
-        Material {
-            r: v[0],
-            g: v[1],
-            b: v[2],
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Face {
     vertex_indices: Vec<i32>,
