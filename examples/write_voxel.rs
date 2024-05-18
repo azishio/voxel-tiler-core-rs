@@ -26,7 +26,7 @@ fn main() {
 
         // LASファイルからボクセルデータを生成
         // Generate voxel data from LAS files
-        let v = Voxelizer::<Fit>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
+        let v = Voxelizer::<Fit>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, true);
 
         // VoxelizerParams::TILINGがfalseの場合、Voxelizerが返すVecの要素数は1である
         // If VoxelizerParams::TILING is false, the number of Vec elements returned by Voxelizer is 1

@@ -26,7 +26,7 @@ fn main() {
 
         // LASファイルからボクセルデータを生成
         // Generate voxel data from LAS files
-        let tiled_voxels = Voxelizer::<Tile>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
+        let tiled_voxels = Voxelizer::<Tile>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, true);
 
         tiled_voxels.into_iter().for_each(|(tile_idx, voxel_mesh)| {
             // ボクセルデータをPLYファイルのbufferに変換
