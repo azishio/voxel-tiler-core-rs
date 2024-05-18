@@ -8,12 +8,6 @@ use las::{Color, Read, Reader};
 
 use crate::{Coord, default_params, Offset, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh, VoxelPointCloud};
 
-pub struct VoxelModel {
-    pub voxel_mesh: VoxelMesh<f32>,
-    pub min_voxel_coord: Coord<u32>,
-}
-
-
 pub struct Voxelizer<Params: VoxelizerParams = default_params::Fit> {
     _param: PhantomData<Params>,
 }
