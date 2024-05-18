@@ -30,6 +30,21 @@ name = "read_ply"
 path = "examples/read_ply.rs"
 
 [features]
-default = ["rayon", "print-warning"]
+default = ["print-warning"]
 rayon = ["dep:rayon", "laz/parallel", "las/laz-parallel"]
 print-warning = []
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "create_voxel"
+path = "benches/create_voxel.rs"
+harness = false
+required-features = ["las"]
+
+[[bench]]
+name = "create_voxel_par"
+path = "benches/create_voxel.rs"
+harness = false
+required-features = ["rayon", "las"]
