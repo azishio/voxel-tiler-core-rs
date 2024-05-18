@@ -6,7 +6,7 @@ use std::io::{BufReader, Write};
 use coordinate_transformer::{JprOrigin, ZoomLv};
 
 use voxel_tiler_core::{PlyStructs, Voxelizer};
-use voxel_tiler_core::default_params::Tile;
+use voxel_tiler_core::default_params::Fit;
 
 fn main() {
     // 出力先のディレクトリを作成
@@ -26,7 +26,7 @@ fn main() {
 
         // LASファイルからボクセルデータを生成
         // Generate voxel data from LAS files
-        let v = Voxelizer::<Tile>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
+        let v = Voxelizer::<Fit>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
 
         // VoxelizerParams::TILINGがfalseの場合、Voxelizerが返すVecの要素数は1である
         // If VoxelizerParams::TILING is false, the number of Vec elements returned by Voxelizer is 1
