@@ -28,18 +28,19 @@ rayon = { version = "1.10.0", optional = true }
 vec-x = "0.7.0"
 
 [[example]]
-name = "create_voxel_tile_ply"
+name = "write_voxel_tiles"
 path = "examples/write_voxel_tiles.rs"
-required-features = ["las", "print-warning"]
+required-features = ["print-warning"]
 
 [[example]]
-name = "create_voxel_ply"
+name = "write_voxel"
 path = "examples/write_voxel.rs"
-required-features = ["las", "print-warning"]
+required-features = ["print-warning"]
 
 [[example]]
 name = "read_ply"
 path = "examples/read_ply.rs"
+required-features = ["las", "print-warning"]
 
 [features]
 default = []

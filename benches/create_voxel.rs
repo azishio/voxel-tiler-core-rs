@@ -11,7 +11,7 @@ fn create_voxel() {
     let require_zoom_lv = vec![ZoomLv::Lv17];
 
     require_zoom_lv.into_iter().for_each(|zoom_lv| {
-        let las = BufReader::new(File::open("./examples/data-source/01JE2421.las").unwrap());
+        let las = BufReader::new(File::open("./examples/data-source/01JE2423.las").unwrap());
 
         let v = Voxelizer::<Tile>::voxelize_from_jpr_las(las, JprOrigin::One, zoom_lv, false);
 

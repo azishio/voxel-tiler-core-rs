@@ -13,7 +13,7 @@ fn main() {
     // Create output destination directory
     std::fs::create_dir_all("examples/exports/tiles").unwrap();
 
-    let file_name = "01JE2421";
+    let file_name = "01JE2423";
 
     // ボクセルデータを生成するズームレベルのリスト
     // List of zoom levels to generate voxel data
