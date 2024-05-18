@@ -8,10 +8,11 @@ coordinate-transformer = "1.5.0"
 fxhash = "0.2.1"
 indexmap = "2.2.6"
 las = { version = "0.8.7", optional = true }
-laz = { version = "0.9.1", optional = true, features = ["parallel"] }
+laz = { version = "0.9.1", optional = true }
 num = "0.4.3"
 ordered-float = "4.2.0"
 ply-rs = "0.1.3"
+rayon = { version = "1.10.0", optional = true }
 vec-x = "0.7.0"
 
 [[example]]

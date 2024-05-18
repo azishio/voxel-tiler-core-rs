@@ -255,6 +255,7 @@ checksum = "89e399f33abb45b5d8cc1bf6191deb2ff11468d1ef25861cba9b8a1ae37bec7b"
 dependencies = [
  "byteorder",
  "chrono",
+ "laz",
  "num-traits",
  "thiserror",
  "uuid",
@@ -653,6 +654,7 @@ dependencies = [
  "num",
  "ordered-float",
  "ply-rs",
+ "rayon",
  "vec-x",
 ]
 
