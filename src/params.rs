@@ -28,6 +28,13 @@ pub enum Offset {
     ///
     /// Align the minimum coordinates of AABB in the voxel data with the origin in 3D space.
     Voxel,
+
+    /// 3D空間の原点をそのまま使用する。
+    /// 単精度浮動小数点数で表現した際に十分な精度が得られることを確認して使用してください。
+    ///
+    /// Use the origin of 3D space as it is.
+    /// Make sure that sufficient precision is available when expressed as a single-precision floating-point number before use.
+    None,
 }
 
 /// `Voxelizer`のパラメータを定義するトレイト。
