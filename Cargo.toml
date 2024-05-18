@@ -12,5 +12,14 @@ laz = { version = "0.9.1", optional = true, features = ["parallel"] }
 num = "0.4.3"
 ordered-float = "4.2.0"
 ply-rs = "0.1.3"
-vec-x = "0.2.0"
 vec-x = "0.6.0"
+
+[[example]]
+name = "create_voxel_tile_ply"
+path = "examples/create_voxel_tile/main.rs"
+required-features = ["las"]
+
+[[example]]
+name = "create_voxel_ply"
+path = "examples/create_voxel/main.rs"
+required-features = ["las"]
