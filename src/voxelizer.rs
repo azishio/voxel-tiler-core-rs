@@ -6,7 +6,7 @@ use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolu
 #[cfg(feature = "las")]
 use las::{Color, Read, Reader};
 
-use crate::{Coord, default_params, Offset, PixelPointCloud, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh};
+use crate::{Coord, default_params, Offset, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh, VoxelPointCloud};
 
 pub struct VoxelModel {
     pub voxel_mesh: VoxelMesh<f32>,
@@ -47,22 +47,28 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
             (Coord::new([x, y, z]), RGB::new([r, g, b]))
         }).collect::<Vec<Point<u32>>>();
 
-        let point_cloud = PixelPointCloud::new(jpr_points, zoom_lv);
+        let point_cloud = VoxelPointCloud::new(jpr_points, zoom_lv);
 
         Self::voxelize(point_cloud)
     }
 
-    pub fn voxelize(point_cloud: PixelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
+    pub fn voxelize(point_cloud: VoxelPointCloud) -> Vec<(TileIdx, VoxelMesh<f32>)> {
         let min_voxel_coord = point_cloud.points.iter().fold(Coord::new([u32::MAX, u32::MAX, u32::MAX]), |min, (pixel_coord, _)| {
             Coord::new([min[0].min(pixel_coord[0]), min[1].min(pixel_coord[1]), min[2].min(pixel_coord[2])])
         });
 
         let voxel_collection = if Params::TILING {
-            VoxelCollection::from_pixel_point_cloud_with_tiling(point_cloud, Params::THRESHOLD)
+            let split_points = point_cloud.split_by_tile();
+
+            split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
+                let voxel_collection = VoxelCollection::from_voxel_point_cloud(pixel_point_cloud, Params::THRESHOLD);
+
+                (tile_idx, voxel_collection)
+            }).collect::<Vec<_>>()
         } else {
             let tile_idx = min_voxel_coord.fit() / 256_u32;
 
-            vec![(tile_idx, VoxelCollection::from_pixel_point_cloud(point_cloud, Params::THRESHOLD))]
+            vec![(tile_idx, VoxelCollection::from_voxel_point_cloud(point_cloud, Params::THRESHOLD))]
         };
 
         let offset = match Params::OFFSET {

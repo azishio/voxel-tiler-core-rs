@@ -8,15 +8,17 @@ pub type Coord<T> = VecX<T, 3>;
 pub type RGB = VecX<u8, 3>;
 pub type Point<T> = (Coord<T>, RGB);
 
-type SumRGB = VecX<usize, 3>;
 pub type TileIdx = VecX<u32, 2>;
 
-pub struct PixelPointCloud {
+/// ピクセル座標で表された点群を表す構造体
+pub struct VoxelPointCloud {
+    /// 点群
     pub points: Vec<Point<u32>>,
     pub zoom_lv: ZoomLv,
 }
 
-impl PixelPointCloud {
+impl VoxelPointCloud {
+    /// 新しい`VoxelPointCloud`を生成します。
     pub fn new(points: Vec<Point<u32>>, zoom_lv: ZoomLv) -> Self {
         Self {
             points,
@@ -33,6 +35,8 @@ impl PixelPointCloud {
 
     pub(crate) fn split_by_tile(self) -> Vec<(TileIdx, PixelPointCloud)> {
         let mut tiled_points = HashMap::<TileIdx, PixelPointCloud, FxBuildHasher>::with_hasher(Default::default());
+    pub fn split_by_tile(self) -> Vec<(TileIdx, VoxelPointCloud)> {
+        let mut tiled_points = HashMap::<TileIdx, VoxelPointCloud, FxBuildHasher>::with_hasher(Default::default());
 
         self.points.into_iter().for_each(|(pixel_coord, rgb)| {
             let tile_idx = {
@@ -43,7 +47,7 @@ impl PixelPointCloud {
                 TileIdx::new([tile_x, tile_y])
             };
 
-            tiled_points.entry(tile_idx).or_insert(PixelPointCloud::new(Vec::new(), self.zoom_lv)).points.push((pixel_coord, rgb));
+            tiled_points.entry(tile_idx).or_insert(VoxelPointCloud::new(Vec::new(), self.zoom_lv)).points.push((pixel_coord, rgb));
         });
 
         tiled_points.into_iter().collect::<Vec<_>>()
@@ -53,6 +57,8 @@ impl PixelPointCloud {
 pub struct VoxelCollection {
     pub(crate) voxels: Vec<Point<u32>>,
     pub(crate) zoom_lv: ZoomLv,
+    pub voxels: Vec<Point<u32>>,
+    pub zoom_lv: ZoomLv,
 }
 
 impl VoxelCollection {
@@ -78,13 +84,10 @@ impl VoxelCollection {
 
         split_points.into_iter().map(|(tile_idx, pixel_point_cloud)| {
             let voxel_collection = Self::from_pixel_point_cloud(pixel_point_cloud, threshold);
+    pub fn from_voxel_point_cloud(voxel_point_cloud: VoxelPointCloud, threshold: usize) -> Self {
+        type SumRGB = VecX<usize, 3>;
 
-            (tile_idx, voxel_collection)
-        }).collect::<Vec<_>>()
-    }
-
-    pub fn from_pixel_point_cloud(pixel_point_cloud: PixelPointCloud, threshold: usize) -> Self {
-        let PixelPointCloud { points, zoom_lv } = pixel_point_cloud;
+        let VoxelPointCloud { points, zoom_lv } = voxel_point_cloud;
 
         let mut voxel_map = HashMap::<Coord<u32>, (usize, SumRGB), FxBuildHasher>::with_hasher(Default::default());
 
