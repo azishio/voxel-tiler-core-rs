@@ -16,12 +16,12 @@ vec-x = "0.6.0"
 
 [[example]]
 name = "create_voxel_tile_ply"
-path = "examples/create_voxel_tile.rs"
+path = "examples/write_voxel_tiles.rs"
 required-features = ["las"]
 
 [[example]]
 name = "create_voxel_ply"
-path = "examples/create_voxel.rs"
+path = "examples/write_voxel.rs"
 required-features = ["las"]
 
 [[example]]

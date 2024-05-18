@@ -11,7 +11,7 @@ use voxel_tiler::default_params::Tile;
 fn main() {
     // 出力先のディレクトリを作成
     // Create output destination directory
-    std::fs::create_dir_all("examples/create_voxel_exports").unwrap();
+    std::fs::create_dir_all("examples/exports/tiles").unwrap();
 
     let file_name = "01JE2421";
 
@@ -35,7 +35,7 @@ fn main() {
 
             // ファイルを作成
             // Create file
-            let mut file = File::create(format!("./examples/create_voxel_tile_exports/{}-{}-{}-{}.ply", file_name, tile_idx[0], tile_idx[1], zoom_lv as u32)).expect("Unable to create file");
+            let mut file = File::create(format!("./examples/exports/tiles/{}-{}-{}-{}.ply", file_name, tile_idx[0], tile_idx[1], zoom_lv as u32)).expect("Unable to create file");
 
             // ファイルに書き込み
             // Write to file
