@@ -24,7 +24,7 @@ impl VoxelizerParams for Params {
 fn main() {
     // 出力先のディレクトリを作成
     // Create output destination directory
-    std::fs::create_dir_all("examples/create_voxel/exports").unwrap();
+    std::fs::create_dir_all("examples/create_voxel_exports").unwrap();
 
     let file_name = "01JE2421";
 
@@ -54,7 +54,7 @@ fn main() {
 
         // ファイルを作成
         // Create file
-        let mut file = File::create(format!("./examples/create_voxel/exports/{}-{}.ply", file_name, zoom_lv as u32)).expect("Unable to create file");
+        let mut file = File::create(format!("./examples/create_voxel_exports/{}-{}.ply", file_name, zoom_lv as u32)).expect("Unable to create file");
 
         // ファイルに書き込み
         // Write to file
