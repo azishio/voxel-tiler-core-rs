@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use coordinate_transformer::pixel_ll::ZoomLv;
 use fxhash::FxBuildHasher;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use vec_x::VecX;
 
 pub type Coord<T> = VecX<T, 3>;
@@ -138,21 +140,30 @@ impl VoxelCollection {
             }).or_insert((0, Coord::new([0, 0, 0])));
         });
 
-        let voxels = voxel_map.into_iter().filter_map(|(pixel_coord, (count, sum_rgb))| {
-            if count == 0 {
-                return None;
-            }
-            if count < threshold {
-                return None;
-            }
+        let voxels = {
+            let f = |(pixel_coord, (count, sum_rgb)): (Coord<u32>, (usize, SumRGB))| {
+                if count == 0 {
+                    return None;
+                }
+                if count < threshold {
+                    return None;
+                }
 
-            let rgb = RGB::new([
-                (sum_rgb[0] / count) as u8,
-                (sum_rgb[1] / count) as u8,
-                (sum_rgb[2] / count) as u8,
-            ]);
-            Some((pixel_coord, rgb))
-        }).collect::<Vec<_>>();
+                let rgb = RGB::new([
+                    (sum_rgb[0] / count) as u8,
+                    (sum_rgb[1] / count) as u8,
+                    (sum_rgb[2] / count) as u8,
+                ]);
+                Some((pixel_coord, rgb))
+            };
+
+            if cfg!(feature = "rayon") {
+                voxel_map.into_iter().filter_map(f).collect::<Vec<_>>()
+            } else {
+                voxel_map.into_iter().filter_map(f).collect::<Vec<_>>()
+            }
+        };
+
 
         Self { voxels, zoom_lv }
     }

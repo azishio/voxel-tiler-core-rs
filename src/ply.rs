@@ -7,8 +7,10 @@ use ply_rs::parser::Parser;
 use ply_rs::ply::{Addable, DefaultElement, ElementDef, Encoding, Ply, Property, PropertyAccess, PropertyDef, PropertyType, ScalarType};
 use ply_rs::ply::Property::{Float, ListUInt, UChar};
 use ply_rs::writer::Writer;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 
-use crate::{Point, VoxelMesh};
+use crate::{Point, VertexIndices, VoxelMesh};
 
 /// Plyファイルにおける1つの頂点を表す構造体
 ///
@@ -235,15 +237,29 @@ impl PlyStructs {
             ..
         } = voxel_mesh;
 
-        let vertices = vertices.into_iter().map(Vertex::from).collect::<Vec<_>>();
-        let faces = face.into_iter().map(|vertex_indices| {
-            let vertex_indices = vertex_indices.into_iter().map(|i| i as u32).collect::<Vec<_>>();
-
-            Face {
-                vertex_indices,
+        let vertices = {
+            if cfg!(feature = "rayon") {
+                vertices.into_par_iter().map(Vertex::from).collect::<Vec<_>>()
+            } else {
+                vertices.into_iter().map(Vertex::from).collect::<Vec<_>>()
             }
-        }).collect::<Vec<_>>();
+        };
 
+        let faces = {
+            let f = |vertex_indices: VertexIndices| {
+                let vertex_indices = vertex_indices.into_iter().map(|i| i as u32).collect::<Vec<_>>();
+
+                Face {
+                    vertex_indices,
+                }
+            };
+
+            if cfg!(feature = "rayon") {
+                face.into_par_iter().map(f).collect::<Vec<_>>()
+            } else {
+                face.into_iter().map(f).collect::<Vec<_>>()
+            }
+        };
 
         Self {
             vertices,
@@ -305,15 +321,31 @@ impl PlyStructs {
                 .into_iter().for_each(|e| ply.header.elements.add(e));
 
             // データの追加
-            let vertex = self.vertices.into_iter().map(|Vertex { x, y, z, r, g, b }| {
-                DefaultElement::from_iter([
-                    ("x".to_string(), Float(x)), ("y".to_string(), Float(y)), ("z".to_string(), Float(z)), ("red".to_string(), UChar(r)), ("green".to_string(), UChar(g)), ("blue".to_string(), UChar(b))])
-            }).collect::<Vec<_>>();
+            let vertex = {
+                let f = |Vertex { x, y, z, r, g, b }| {
+                    DefaultElement::from_iter([
+                        ("x".to_string(), Float(x)), ("y".to_string(), Float(y)), ("z".to_string(), Float(z)), ("red".to_string(), UChar(r)), ("green".to_string(), UChar(g)), ("blue".to_string(), UChar(b))])
+                };
+
+                if cfg!(feature = "rayon") {
+                    self.vertices.into_par_iter().map(f).collect::<Vec<_>>()
+                } else {
+                    self.vertices.into_iter().map(f).collect::<Vec<_>>()
+                }
+            };
             ply.payload.insert("vertex".to_string(), vertex);
 
-            let face = self.faces.into_iter().map(|Face { vertex_indices }| {
-                DefaultElement::from_iter([("vertex_indices".to_string(), ListUInt(vertex_indices))])
-            }).collect::<Vec<_>>();
+            let face = {
+                let f = |Face { vertex_indices }| {
+                    DefaultElement::from_iter([("vertex_indices".to_string(), ListUInt(vertex_indices))])
+                };
+
+                if cfg!(feature = "rayon") {
+                    self.faces.into_par_iter().map(f).collect::<Vec<_>>()
+                } else {
+                    self.faces.into_iter().map(f).collect::<Vec<_>>()
+                }
+            };
             ply.payload.insert("face".to_string(), face);
 
             ply

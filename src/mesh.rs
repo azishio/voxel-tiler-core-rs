@@ -4,6 +4,8 @@ use std::hash::Hash;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
 use num::Num;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use vec_x::VecX;
 
 use crate::{Point, VoxelCollection};
@@ -105,11 +107,16 @@ impl<T> VoxelMesh<T>
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
             U: Num + Sized + Send,
-            F: Fn(Point<T>) -> Point<U>,
+            F: Fn(Point<T>) -> Point<U> + Sync + Send,
     {
         let Self { vertices, face } = self;
 
-        let vertices = vertices.into_iter().map(f).collect::<Vec<_>>();
+        let vertices = if cfg!(feature = "rayon") {
+            vertices.into_par_iter().map(f).collect::<Vec<_>>()
+        } else {
+            vertices.into_iter().map(f).collect::<Vec<_>>()
+        };
+
 
         VoxelMesh {
             vertices,

@@ -5,6 +5,8 @@ use std::marker::PhantomData;
 use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel2ll, pixel_resolution, ZoomLv};
 #[cfg(feature = "las")]
 use las::{Color, Read, Reader};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 
 use crate::{Coord, default_params, Offset, Point, RGB, TileIdx, VoxelCollection, VoxelizerParams, VoxelMesh, VoxelPointCloud};
 
@@ -29,25 +31,34 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
 
         let points = reader.points().collect::<Vec<_>>();
 
-        let jpr_points = points.into_iter().map(|wrapped_points| {
-            let point = wrapped_points.unwrap();
+        let jpr_points = {
+            let f = |wrapped_points: Result<las::Point, _>| {
+                let point = wrapped_points.unwrap();
 
-            let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
+                let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
 
-            let (x, y) = ll2pixel((long, lat), zoom_lv);
+                let (x, y) = ll2pixel((long, lat), zoom_lv);
 
-            let pixel_resolution = pixel_resolution(lat, zoom_lv);
+                let pixel_resolution = pixel_resolution(lat, zoom_lv);
 
-            let z = (point.z / pixel_resolution) as u32;
+                let z = (point.z / pixel_resolution) as u32;
 
-            let color = point.color.unwrap_or(Color::new(0, 0, 0));
+                let color = point.color.unwrap_or(Color::new(0, 0, 0));
 
-            let r = (color.red / u8::MAX as u16) as u8;
-            let g = (color.green / u8::MAX as u16) as u8;
-            let b = (color.blue / u8::MAX as u16) as u8;
+                let r = (color.red / u8::MAX as u16) as u8;
+                let g = (color.green / u8::MAX as u16) as u8;
+                let b = (color.blue / u8::MAX as u16) as u8;
 
-            (Coord::new([x, y, z]), RGB::new([r, g, b]))
-        }).collect::<Vec<Point<u32>>>();
+                (Coord::new([x, y, z]), RGB::new([r, g, b]))
+            };
+
+            if cfg!(feature = "rayon") {
+                points.into_par_iter().map(f).collect::<Vec<Point<u32>>>()
+            } else {
+                points.into_iter().map(f).collect::<Vec<Point<u32>>>()
+            }
+        };
+
 
         let point_cloud = VoxelPointCloud::new(jpr_points, zoom_lv);
 

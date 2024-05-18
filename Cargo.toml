@@ -30,5 +30,6 @@ name = "read_ply"
 path = "examples/read_ply.rs"
 
 [features]
-default = ["print-warning"]
+default = ["rayon", "print-warning"]
+rayon = ["dep:rayon", "laz/parallel", "las/laz-parallel"]
 print-warning = []
