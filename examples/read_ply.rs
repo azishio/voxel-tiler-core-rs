@@ -31,4 +31,9 @@ fn main() {
     // `box.ply`と`have_unsupported_properties_box.ply`において、対応するプロパティは同じです。
     // In `box.ply` and `have_unsupported_properties_box.ply`, the corresponding properties are the same.
     assert_eq!(ascii_ply.to_ascii_ply_buf(), ply.to_ascii_ply_buf());
+
+    // red, green, blueのうち、存在しないプロパティは0で埋められます。
+    let file = File::open("examples/data-source/cone.ply").unwrap();
+    let ply = PlyStructs::from_ply(file);
+    println!("{:?}", ply);
 }
