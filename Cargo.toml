@@ -23,3 +23,7 @@ required-features = ["las"]
 name = "create_voxel_ply"
 path = "examples/create_voxel.rs"
 required-features = ["las"]
+
+[[example]]
+name = "read_ply"
+path = "examples/read_ply.rs"
