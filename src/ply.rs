@@ -51,7 +51,7 @@ impl PropertyAccess for Vertex {
             ("red", UChar(v)) => self.r = v,
             ("green", UChar(v)) => self.g = v,
             ("blue", UChar(v)) => self.b = v,
-            (k, _) => if cfg!(feature = "print-warning") { println!("[warn] Vertex: Unexpected key/value combination: key: {}", k) },
+            (k, _) => if cfg!(feature = "print-log") { println!("[warn] Vertex: Unexpected key/value combination: key: {}", k) },
         }
     }
 }
@@ -108,7 +108,7 @@ impl PropertyAccess for Face {
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
             ("vertex_indices", ListUInt(v)) => self.vertex_indices = v,
-            (k, _) => if cfg!(feature = "print-warning") { println!("[warn] Face: Unexpected key/value combination: key: {}", k) },
+            (k, _) => if cfg!(feature = "print-log") { println!("[warn] Face: Unexpected key/value combination: key: {}", k) },
         }
     }
 }
@@ -195,10 +195,6 @@ impl PlyStructs {
     ///  let file: Vec<u8> = std::fs::read("examples/data-source/box.ply").unwrap();
     ///  let ply_by_buf = PlyStructs::from_ply(file.as_slice());
     /// ```
-    ///
-    /// For actual behavior, see `examples/read_ply.rs`.
-    ///
-    /// 実際の動作は`examples/read_ply.rs`を参照してください。
     pub fn from_ply<T: Read>(file: T) -> Self {
         let mut buf_reader = BufReader::new(file);
 
@@ -214,7 +210,7 @@ impl PlyStructs {
             match element.name.as_ref() {
                 "vertex" => vertex_list = vertex_parser.read_payload_for_element(&mut buf_reader, element, &header).unwrap(),
                 "face" => face_list = face_parser.read_payload_for_element(&mut buf_reader, element, &header).unwrap(),
-                _ => {}
+                _ => if cfg!(feature = "print-log") { println!("[warn] PlyStructs::from_ply: Unexpected element name: {}", element.name) },
             }
         });
 

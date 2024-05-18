@@ -39,22 +39,22 @@ criterion = "0.5.1"
 default = []
 rayon = ["dep:rayon", "laz/parallel", "las/laz-parallel"]
 jamalloc = ["dep:tikv-jemallocator"]
-print-warning = []
+print-log = []
 
 [[example]]
 name = "write_voxel_tiles"
 path = "examples/write_voxel_tiles.rs"
-required-features = ["print-warning"]
+required-features = ["print-log"]
 
 [[example]]
 name = "write_voxel"
 path = "examples/write_voxel.rs"
-required-features = ["print-warning"]
+required-features = ["print-lg"]
 
 [[example]]
 name = "read_ply"
 path = "examples/read_ply.rs"
-required-features = ["las", "print-warning"]
+required-features = ["las", "print-log"]
 
 
 [[bench]]
