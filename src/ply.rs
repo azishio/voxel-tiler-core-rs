@@ -5,12 +5,12 @@ use indexmap::IndexSet;
 use ordered_float::NotNan;
 use ply_rs::parser::Parser;
 use ply_rs::ply::{Addable, DefaultElement, ElementDef, Encoding, Ply, Property, PropertyAccess, PropertyDef, PropertyType, ScalarType};
-use ply_rs::ply::Property::{Float, ListInt, UChar};
+use ply_rs::ply::Property::{Float, ListUInt, UChar};
 use ply_rs::writer::Writer;
-use vec_x::VecX;
 
 use crate::{Point, VoxelMesh};
 
+/// Plyファイルにおける1つの頂点を表す構造体
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Vertex {
     x: NotNan<f32>,
@@ -52,9 +52,10 @@ impl From<Point<f32>> for Vertex {
     }
 }
 
+/// Plyファイルにおける1つの面を表す構造体
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Face {
-    vertex_indices: Vec<i32>,
+    vertex_indices: Vec<u32>,
 }
 
 impl PropertyAccess for Face {
@@ -64,12 +65,13 @@ impl PropertyAccess for Face {
 
     fn set_property(&mut self, key: String, property: Property) {
         match (key.as_ref(), property) {
-            ("vertex_index", ListInt(v)) => self.vertex_indices = v,
+            ("vertex_indices", ListUInt(v)) => self.vertex_indices = v,
             (k, _) => panic!("Face: Unexpected key/value combination: key: {}", k),
         }
     }
 }
 
+/// Ply形式のデータを生成するために必要な情報を持つ構造体
 #[derive(Clone, Debug, Default)]
 pub struct PlyStructs {
     vertices: Vec<Vertex>,
@@ -77,6 +79,7 @@ pub struct PlyStructs {
 }
 
 impl PlyStructs {
+    /// 頂点と面を指定してPlyStructsを生成
     pub fn new(vertices: Vec<Vertex>, faces: Vec<Face>) -> Self {
         Self {
             vertices,
@@ -90,13 +93,13 @@ impl PlyStructs {
 
         ply_list.into_iter().for_each(|ply| {
             ply.faces.into_iter().for_each(|face| {
-                let vertex_index = face.vertex_indices.into_iter().map(|i| {
+                let vertex_indices = face.vertex_indices.into_iter().map(|i| {
                     let vertex = ply.vertices[i as usize];
 
-                    vertex_set.insert_full(vertex).0 as i32
+                    vertex_set.insert_full(vertex).0 as u32
                 }).collect::<Vec<_>>();
 
-                face_set.insert(Face { vertex_indices: vertex_index });
+                face_set.insert(Face { vertex_indices });
             });
         });
 
@@ -106,6 +109,7 @@ impl PlyStructs {
         }
     }
 
+    /// Plyのフォーマットに沿ったデータからPlyStructsを生成
     pub fn from_ply<T: Read>(file: T) -> Self {
         let mut buf_reader = BufReader::new(file);
 
@@ -119,8 +123,8 @@ impl PlyStructs {
 
         header.elements.iter().for_each(|(_, element)| {
             match element.name.as_ref() {
-                "vertex" => vertex_list = vertex_parser.read_payload_for_element(&mut buf_reader, &element, &header).unwrap(),
-                "face" => face_list = face_parser.read_payload_for_element(&mut buf_reader, &element, &header).unwrap(),
+                "vertex" => vertex_list = vertex_parser.read_payload_for_element(&mut buf_reader, element, &header).unwrap(),
+                "face" => face_list = face_parser.read_payload_for_element(&mut buf_reader, element, &header).unwrap(),
                 _ => {}
             }
         });
@@ -128,6 +132,7 @@ impl PlyStructs {
         Self::new(vertex_list, face_list)
     }
 
+    /// VoxelMeshからPlyStructsを生成
     pub fn from_voxel_mesh(voxel_mesh: VoxelMesh<f32>) -> Self {
         let VoxelMesh {
             vertices,
@@ -137,7 +142,7 @@ impl PlyStructs {
 
         let vertices = vertices.into_iter().map(Vertex::from).collect::<Vec<_>>();
         let faces = face.into_iter().map(|vertex_indices| {
-            let vertex_indices = vertex_indices.into_iter().map(|i| i as i32).collect::<Vec<_>>();
+            let vertex_indices = vertex_indices.into_iter().map(|i| i as u32).collect::<Vec<_>>();
 
             Face {
                 vertex_indices,
@@ -151,14 +156,17 @@ impl PlyStructs {
         }
     }
 
+    /// Ascii形式のPlyファイルのバッファを生成
     pub fn to_ascii_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::Ascii)
     }
 
+    /// バイナリ(リトルエディアン)形式のPlyファイルのバッファを生成
     pub fn to_binary_little_endian_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::BinaryLittleEndian)
     }
 
+    /// バイナリ(ビッグエディアン)形式のPlyファイルのバッファを生成
     pub fn to_binary_big_endian_ply_buf(self) -> Vec<u8> {
         self.into_buf(Encoding::BinaryBigEndian)
     }
@@ -183,7 +191,7 @@ impl PlyStructs {
 
             let mut face_element = ElementDef::new("face".to_string());
             [
-                PropertyDef::new("vertex_indices".to_string(), PropertyType::List(ScalarType::UChar, ScalarType::Int)),
+                PropertyDef::new("vertex_indices".to_string(), PropertyType::List(ScalarType::UChar, ScalarType::UInt)),
             ].into_iter().for_each(|p| face_element.properties.add(p));
 
             [vertex_element, face_element]
@@ -196,8 +204,8 @@ impl PlyStructs {
             }).collect::<Vec<_>>();
             ply.payload.insert("vertex".to_string(), vertex);
 
-            let face = self.faces.into_iter().map(|Face { vertex_indices: vertex_index }| {
-                DefaultElement::from_iter([("vertex_indices".to_string(), ListInt(vertex_index))])
+            let face = self.faces.into_iter().map(|Face { vertex_indices }| {
+                DefaultElement::from_iter([("vertex_indices".to_string(), ListUInt(vertex_indices))])
             }).collect::<Vec<_>>();
             ply.payload.insert("face".to_string(), face);
 
