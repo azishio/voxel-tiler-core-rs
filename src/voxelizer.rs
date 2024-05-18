@@ -24,6 +24,7 @@ pub struct Voxelizer<Params: VoxelizerParams = default_params::Fit> {
 
 impl<Params: VoxelizerParams> Voxelizer<Params> {
     #[cfg(feature = "las")]
+    #[cfg(not(feature = "rayon"))]
     pub fn voxelize_from_jpr_las<T>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv, rotate: bool) -> Vec<(TileIdx, VoxelMesh<f32>)>
         where T: BufRead + Seek + Send + Debug,
     {
@@ -31,8 +32,8 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
 
         let points = reader.points().collect::<Vec<_>>();
 
-        let jpr_points = {
-            let f = |wrapped_points: Result<las::Point, _>| {
+        let jpr_points = points.into_iter().map(
+            |wrapped_points| {
                 let point = wrapped_points.unwrap();
 
                 let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
@@ -50,15 +51,42 @@ impl<Params: VoxelizerParams> Voxelizer<Params> {
                 let b = (color.blue / u8::MAX as u16) as u8;
 
                 (Coord::new([x, y, z]), RGB::new([r, g, b]))
-            };
+            }).collect::<Vec<Point<u32>>>();
 
-            if cfg!(feature = "rayon") {
-                points.into_par_iter().map(f).collect::<Vec<Point<u32>>>()
-            } else {
-                points.into_iter().map(f).collect::<Vec<Point<u32>>>()
-            }
-        };
+        let point_cloud = VoxelPointCloud::new(jpr_points, zoom_lv);
 
+        Self::voxelize(point_cloud)
+    }
+
+    #[cfg(feature = "las")]
+    #[cfg(feature = "rayon")]
+    pub fn voxelize_from_jpr_las<T>(las: T, jpr_origin: JprOrigin, zoom_lv: ZoomLv, rotate: bool) -> Vec<(TileIdx, VoxelMesh<f32>)>
+        where T: BufRead + Seek + Send + Debug,
+    {
+        let mut reader = Reader::new(las).unwrap();
+
+        let points = reader.points().collect::<Vec<_>>();
+
+        let jpr_points = points.into_par_iter().map(
+            |wrapped_points| {
+                let point = wrapped_points.unwrap();
+
+                let (long, lat) = if !rotate { jpr2ll((point.y, point.x), jpr_origin) } else { jpr2ll((point.x, point.y), jpr_origin) };
+
+                let (x, y) = ll2pixel((long, lat), zoom_lv);
+
+                let pixel_resolution = pixel_resolution(lat, zoom_lv);
+
+                let z = (point.z / pixel_resolution) as u32;
+
+                let color = point.color.unwrap_or(Color::new(0, 0, 0));
+
+                let r = (color.red / u8::MAX as u16) as u8;
+                let g = (color.green / u8::MAX as u16) as u8;
+                let b = (color.blue / u8::MAX as u16) as u8;
+
+                (Coord::new([x, y, z]), RGB::new([r, g, b]))
+            }).collect::<Vec<Point<u32>>>();
 
         let point_cloud = VoxelPointCloud::new(jpr_points, zoom_lv);
 

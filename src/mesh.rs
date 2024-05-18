@@ -104,6 +104,7 @@ impl<T> VoxelMesh<T>
     ///
     /// Returns the result of applying the specified function to all vertices.
     /// For example, it can be used to transform the coordinate system of a vertex.
+    #[cfg(not(feature = "rayon"))]
     pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
         where
             U: Num + Sized + Send,
@@ -111,12 +112,28 @@ impl<T> VoxelMesh<T>
     {
         let Self { vertices, face } = self;
 
-        let vertices = if cfg!(feature = "rayon") {
-            vertices.into_par_iter().map(f).collect::<Vec<_>>()
-        } else {
-            vertices.into_iter().map(f).collect::<Vec<_>>()
-        };
+        let vertices = vertices.into_iter().map(f).collect::<Vec<_>>();
 
+        VoxelMesh {
+            vertices,
+            face,
+        }
+    }
+
+    /// 全ての頂点について、指定された関数を適用した結果を返します。
+    /// 例えば、頂点の座標系を変換する場合に使用できます。
+    ///
+    /// Returns the result of applying the specified function to all vertices.
+    /// For example, it can be used to transform the coordinate system of a vertex.
+    #[cfg(feature = "rayon")]
+    pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
+        where
+            U: Num + Sized + Send,
+            F: Fn(Point<T>) -> Point<U> + Sync + Send,
+    {
+        let Self { vertices, face } = self;
+
+        let vertices = vertices.into_par_iter().map(f).collect::<Vec<_>>();
 
         VoxelMesh {
             vertices,
