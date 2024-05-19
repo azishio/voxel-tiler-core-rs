@@ -9,6 +9,9 @@ This crate provides the ability to convert point cloud data into ply files repre
 It also exposes functions related to intermediate processing, so you can partially implement your own implementation if
 you want to perform advanced processing.
 
+If you want to try out the basic functionality right away, you can
+use [voxel-tiler-cli](https://crates.io/crates/voxel-tiler-cli) wrapped in the CLI.
+
 ## Features
 
 + Voxelization processing based on pixel coordinates
