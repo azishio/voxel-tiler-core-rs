@@ -1,6 +1,6 @@
 [package]
 name = "voxel-tiler-core"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["azishio"]
 edition = "2021"
 description = "Convert point clouds to voxel data."
