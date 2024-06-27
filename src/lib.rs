@@ -2,10 +2,7 @@
 #[cfg(feature = "jamalloc")]
 use tikv_jemallocator::Jemalloc;
 
-pub use mesh::*;
 pub use params::*;
-pub use ply::*;
-pub use voxel::*;
 pub use voxelizer::*;
 
 #[cfg(not(target_env = "msvc"))]
@@ -13,9 +10,13 @@ pub use voxelizer::*;
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
-mod voxel;
-mod ply;
-mod mesh;
-mod voxelizer;
-mod params;
+pub mod voxelizer;
+pub mod params;
+pub mod build_voxelizer;
+pub mod collection;
+pub mod element;
+pub mod image_sampler;
+pub mod mesher;
+pub mod glb_gen;
+pub mod ply;
 
