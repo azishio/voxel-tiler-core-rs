@@ -5,8 +5,8 @@ use num::cast::AsPrimitive;
 use ordered_float::{NotNan, OrderedFloat};
 
 use crate::collection::{HMap3DVoxelCollection, Vec2VoxelCollection, Vec3VoxelCollection, VoxelCollection};
-use crate::element::{Int, Number, Resolution, UInt};
-use crate::voxelizer::{MapTileVoxelizer, SimpleVoxelizer, Voxelizer};
+use crate::element::{Int, Number, UInt};
+use crate::voxelizer::{MapTileVoxelizer, Resolution, SimpleVoxelizer, Voxelizer};
 
 /// ボクセライザーを共通のインターフェースで構築するためのトレイトです。
 pub trait BuildVoxelizer<V: Voxelizer<Option>, Option: VoxelizerOption>

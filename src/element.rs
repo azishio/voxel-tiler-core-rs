@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use coordinate_transformer::ZoomLv;
 use nohash::IsEnabled;
 use num::{Bounded, CheckedAdd, CheckedSub, Num};
 use num::traits::NumAssignOps;
@@ -218,18 +217,4 @@ impl<P: Int> Point for Point3D<P> {
 
         (min, max)
     }
-}
-
-/// ボクセライザーの分解能を表します。
-pub enum Resolution {
-    /// メートル単位の分解能です。
-    Mater(f64),
-
-    /// 平面直角座標系の点群をWebメルカトル図法で投影された地球におけるタイル座標系を使用してボクセル化する際のオプションです。
-    /// 分解能は指定されたズームレベルにおけるピクセルの分解能です。
-    /// 例えば、ズームレベルが`ZoomLv::Lv10`の場合、赤道上での1ピクセルの分解能は`[赤道長さ] / 2^10 / 256`です。
-    /// タイル座標に関する詳細は[こちら](https://developers.google.com/maps/documentation/javascript/coordinates)を参照してください。
-    Tile {
-        zoom_lv: ZoomLv,
-    },
 }
