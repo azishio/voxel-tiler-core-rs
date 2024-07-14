@@ -107,22 +107,7 @@ pub trait Point: Clone + Copy {
 
     fn bottom(&self) -> Option<Self>;
 
-    fn front_right(&self) -> Option<Self> {
-        self.front()?.right()
-    }
-
-    fn front_left(&self) -> Option<Self> {
-        self.front()?.left()
-    }
-
-    fn back_right(&self) -> Option<Self> {
-        self.back()?.right()
-    }
-
-    fn back_left(&self) -> Option<Self> {
-        self.back()?.left()
-    }
-
+    /// 与えられた座標値のリストから次元ごとの`(最小値, 最大値)`を計算します。
     fn calc_bounds(list: &Vec<Self>) -> (Self, Self);
 }
 

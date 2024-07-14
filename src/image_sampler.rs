@@ -80,7 +80,6 @@ impl JTerrainImageSampler {
 
                         if let Some(z) = z {
                             let z = (z / resolution) as u32;
-                            let point = Point3D::new([x as u32, y as u32, z]);
                             let color = Color::new(color.0);
 
                             Some((point, color))

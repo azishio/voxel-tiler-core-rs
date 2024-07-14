@@ -18,7 +18,6 @@ use gltf::json::validation::Checked::Valid;
 use gltf::json::validation::USize64;
 use gltf::mesh::Mode;
 use gltf::texture::{MagFilter, MinFilter};
-use image::GenericImageView;
 use num::cast::AsPrimitive;
 
 use crate::element::{Int, UInt};

@@ -11,6 +11,7 @@ where
     u16: AsPrimitive<W>,
 {
     fn from_las(mut reader: las::Reader) -> Self <> {
+    pub fn from_las(mut reader: las::Reader) -> Self <> {
         let points = reader.points().flatten().map(|p| {
             let Point { x, y, z, color, .. } = p;
             let color = {
