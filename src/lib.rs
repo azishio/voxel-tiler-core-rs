@@ -2,6 +2,8 @@
 
 pub use coordinate_transformer;
 pub use gltf;
+#[cfg_attr(docsrs, doc(cfg(feature = "image")))]
+#[cfg(feature = "image")]
 pub use image;
 #[cfg(not(target_env = "msvc"))]
 #[cfg(feature = "jamalloc")]
@@ -17,6 +19,8 @@ pub mod voxelizer;
 pub mod build_voxelizer;
 pub mod collection;
 pub mod element;
+#[cfg_attr(docsrs, doc(cfg(feature = "image")))]
+#[cfg(feature = "image")]
 pub mod image_sampler;
 pub mod glb_gen;
 #[cfg_attr(docsrs, doc(cfg(feature = "ply")))]

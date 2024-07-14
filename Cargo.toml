@@ -45,6 +45,7 @@ default = ["jamalloc"]
 jamalloc = ["dep:tikv-jemallocator"]
 ply = ["dep:ply-rs"]
 las = ["dep:las"]
+image = ["dep:image"]
 
 [[example]]
 name = "point-cloud"
