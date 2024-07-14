@@ -2,19 +2,10 @@ use coordinate_transformer::{pixel_resolution, ZoomLv};
 use fxhash::FxBuildHasher;
 use image::{DynamicImage, Rgb};
 
-use crate::collection::{HMap2DVoxelCollection, VoxelCollection};
+use crate::collection::{HMap3DVoxelCollection, VoxelCollection};
 use crate::element::{Color, Point3D};
 
-struct DefaultColorIter;
-
-impl Iterator for DefaultColorIter {
-    type Item = Rgb<u8>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(Rgb::from([0, 0, 0]))
-    }
-}
-
+/// 画像のピクセルごとの分解能を決定するための基準です。
 pub enum AltitudeResolutionCriteria {
     ZoomLv(ZoomLv),
     Lat(f64, ZoomLv),
@@ -27,7 +18,7 @@ impl JTerrainImageSampler {
         resolution: AltitudeResolutionCriteria,
         altitude_image: DynamicImage,
         color_image: Option<DynamicImage>,
-    ) -> Result<HMap2DVoxelCollection<u32, u8, u8, FxBuildHasher>, anyhow::Error> {
+    ) -> Result<HMap3DVoxelCollection<u32, u8, u8, FxBuildHasher>, anyhow::Error> {
         let resolution = match resolution {
             AltitudeResolutionCriteria::ZoomLv(zoom_lv) => {
                 // 日本経緯度原点の緯度
@@ -82,15 +73,20 @@ impl JTerrainImageSampler {
                             let z = (z / resolution) as u32;
                             let color = Color::new(color.0);
 
-                            Some((point, color))
+                            // 下まで埋めることで高低差が激しい地形などにおいて地形に穴が開くことを防ぐ
+                            // TODO すべての点について埋めるのは無駄なので、必要な点だけ埋めるようにする
+                            let points = (0..=z)
+                                .map(move |z| (Point3D::new([x as u32, y as u32, z]), color));
+
+                            Some(points)
                         } else {
                             None
                         }
-                    })
+                    }).flatten()
             })
             .collect();
 
-        Ok(HMap2DVoxelCollection::builder()
+        Ok(HMap3DVoxelCollection::builder()
             .points(points)
             .resolution(resolution)
             .build())
