@@ -55,3 +55,7 @@ required-features = ["las"]
 name = "bunny"
 path = "examples/bunny.rs"
 required-features = ["ply"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
