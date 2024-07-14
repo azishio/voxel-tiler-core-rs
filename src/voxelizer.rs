@@ -1,4 +1,4 @@
-use coordinate_transformer::{jpr2ll, JprOrigin, ll2pixel, pixel_resolution, ZoomLv};
+use coordinate_transformer::{ll2pixel, pixel_resolution, ZoomLv};
 use dashmap::DashMap;
 use fxhash::FxBuildHasher;
 use num::traits::AsPrimitive;
@@ -121,7 +121,6 @@ pub struct MapTileVoxelizer<Option: VoxelizerOption>
     // value: (Resolution, VoxelsCollection)
     field: DashMap<Point2D<u32>, Option::CalcVC, FxBuildHasher>,
     zoom_lv: ZoomLv,
-    jpr_origin: JprOrigin,
 }
 
 impl<Option: VoxelizerOption> MapTileVoxelizer<Option> {
@@ -161,11 +160,10 @@ where
 {
     fn new(resolution: Resolution) -> Self {
         match resolution {
-            Resolution::Tile { zoom_lv, jpr_origin } =>
+            Resolution::Tile { zoom_lv } =>
                 MapTileVoxelizer {
                     field: DashMap::with_hasher(FxBuildHasher::default()),
                     zoom_lv,
-                    jpr_origin,
                 },
             _ => panic!("Resolution is not tile"),
         }
@@ -174,10 +172,9 @@ where
     fn add<T: VoxelCollection<Option::InPoint, Option::Weight, Option::Color>>(&mut self, pc: T)
     {
         pc.into_vec().into_iter().for_each(|(point, voxel)| {
-            let x = point[0].as_();
-            let y = point[1].as_();
+            let long = point[0].as_();
+            let lat = point[1].as_();
 
-            let (long, lat) = jpr2ll((y, x), self.jpr_origin);
             let (pixel_x, pixel_y) = ll2pixel((long, lat), self.zoom_lv);
             let tile = Point2D::new([pixel_x / 256, pixel_y / 256]);
 

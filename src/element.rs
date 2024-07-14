@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::hash::Hash;
 
-use coordinate_transformer::{JprOrigin, ZoomLv};
+use coordinate_transformer::ZoomLv;
 use nohash::IsEnabled;
 use num::{Bounded, CheckedAdd, CheckedSub, Num};
 use num::traits::NumAssignOps;
@@ -220,7 +220,6 @@ pub enum Resolution {
     Mater(f64),
     Tile {
         zoom_lv: ZoomLv,
-        jpr_origin: JprOrigin,
     },
 }
 

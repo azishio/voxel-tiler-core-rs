@@ -82,7 +82,7 @@ pub struct TerrainTileVoxelizerDefaultOptions {}
 
 impl VoxelizerOption for TerrainTileVoxelizerDefaultOptions
 {
-    type InPoint = OrderedFloat<f32>;
+    type InPoint = OrderedFloat<f64>;
     type OutPoint = i32;
     type Color = u8;
     type Weight = u8;
