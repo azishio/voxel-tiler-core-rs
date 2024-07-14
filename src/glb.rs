@@ -23,7 +23,7 @@ use gltf::texture::{MagFilter, MinFilter};
 use num::cast::AsPrimitive;
 
 use crate::element::{Int, UInt};
-use crate::glb_gen::private::GlbGenPrivateMethod;
+use crate::glb::private::GlbGenPrivateMethod;
 use crate::mesh::VoxelMesh;
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -34,11 +34,17 @@ struct Vertex([f32; 3]);
 #[repr(C)]
 struct UV([f32; 2]);
 
+/// テクスチャのMIMEタイプを表す列挙型です。
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Mime {
     ImageJpeg,
     ImagePng,
 }
+
+/// テクスチャ情報を表す構造体です。
+/// `buf`と`uri`のどちらか一方を指定してください。
+/// どちらも指定した場合、出力されるglbファイルにはどちらも書き込まれますが、glbファイルの仕様上`buf`に格納した情報が優先されます。
+/// どちらも指定されない場合の仕様上の動作はgLTFの規格上未定義です。
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TextureInfo {
     pub buf: Option<Vec<u8>>,
@@ -588,7 +594,7 @@ impl GlbGen<'_> for Glb<'_> {}
 mod test {
     #[test]
     fn test_round_up_to_mul_of_four() {
-        use crate::glb_gen::private::GlbGenPrivateMethod;
+        use crate::glb::private::GlbGenPrivateMethod;
         struct TestStruct;
         impl GlbGenPrivateMethod for TestStruct {}
 
@@ -605,7 +611,7 @@ mod test {
 
     #[test]
     fn test_pad_to_mul_of_four() {
-        use crate::glb_gen::private::GlbGenPrivateMethod;
+        use crate::glb::private::GlbGenPrivateMethod;
         struct TestStruct;
         impl GlbGenPrivateMethod for TestStruct {}
 

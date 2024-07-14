@@ -22,7 +22,7 @@ pub mod element;
 #[cfg_attr(docsrs, doc(cfg(feature = "image")))]
 #[cfg(feature = "image")]
 pub mod image_sampler;
-pub mod glb_gen;
+pub mod glb;
 #[cfg_attr(docsrs, doc(cfg(feature = "ply")))]
 #[cfg(feature = "ply")]
 pub mod ply;
