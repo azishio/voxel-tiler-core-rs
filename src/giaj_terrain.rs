@@ -17,9 +17,9 @@ pub enum AltitudeResolutionCriteria {
 }
 
 /// 国土地理院が公開する標高タイルを用いてボクセルデータを生成するための構造体です。
-pub struct JTerrainImageSampler;
+pub struct GIAJTerrainImageSampler;
 
-impl JTerrainImageSampler {
+impl GIAJTerrainImageSampler {
     pub fn sampling(
         resolution: AltitudeResolutionCriteria,
         altitude_image: DynamicImage,

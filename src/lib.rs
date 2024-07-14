@@ -21,7 +21,7 @@ pub mod collection;
 pub mod element;
 #[cfg_attr(docsrs, doc(cfg(feature = "image")))]
 #[cfg(feature = "image")]
-pub mod image_sampler;
+pub mod giaj_terrain;
 pub mod glb;
 #[cfg_attr(docsrs, doc(cfg(feature = "ply")))]
 #[cfg(feature = "ply")]
