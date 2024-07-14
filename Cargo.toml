@@ -24,7 +24,7 @@ coordinate-transformer = { version = "1.7.0", features = ["vec-x"] }
 dashmap = "6.0.1"
 fxhash = "0.2.1"
 gltf = "1.4.1"
-image = "0.25.1"
+image = { version = "0.25.1", optional = true }
 indexmap = "2.2.6"
 las = { version = "0.8.7", optional = true }
 meshopt = "0.3.0"

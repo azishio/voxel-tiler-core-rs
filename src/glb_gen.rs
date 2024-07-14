@@ -24,7 +24,7 @@ use num::cast::AsPrimitive;
 
 use crate::element::{Int, UInt};
 use crate::glb_gen::private::GlbGenPrivateMethod;
-use crate::voxel_mesh::VoxelMesh;
+use crate::mesh::VoxelMesh;
 
 #[derive(Copy, Clone, Debug, Default)]
 #[repr(C)]

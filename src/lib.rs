@@ -18,12 +18,11 @@ pub mod build_voxelizer;
 pub mod collection;
 pub mod element;
 pub mod image_sampler;
-pub mod mesher;
 pub mod glb_gen;
 #[cfg_attr(docsrs, doc(cfg(feature = "ply")))]
 #[cfg(feature = "ply")]
 pub mod ply;
-pub mod voxel_mesh;
+pub mod mesh;
 
 /// lasファイルから点群を読むためのモジュールです。
 /// 使用するには`las`featureを有効にしてください。

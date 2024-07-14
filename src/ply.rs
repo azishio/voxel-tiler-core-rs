@@ -11,7 +11,7 @@ use ply_rs::writer::Writer;
 
 use crate::collection::{PointCloud, VoxelCollection};
 use crate::element::{Color, Int, Point3D, UInt};
-use crate::voxel_mesh::VoxelMesh;
+use crate::mesh::VoxelMesh;
 
 /// Plyファイルにおける1つの頂点を表す構造体
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
