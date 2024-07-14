@@ -10,7 +10,8 @@ where
     W: UInt + AsPrimitive<u16>,
     u16: AsPrimitive<W>,
 {
-    fn from_las(mut reader: las::Reader) -> Self <> {
+    /// lasファイルから点群を読み込みます。
+    /// 使用するには`las`featureを有効にしてください。
     pub fn from_las(mut reader: las::Reader) -> Self <> {
         let points = reader.points().flatten().map(|p| {
             let Point { x, y, z, color, .. } = p;

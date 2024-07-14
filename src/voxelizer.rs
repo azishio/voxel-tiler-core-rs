@@ -35,11 +35,20 @@ mod private {
 
 pub trait Voxelizer<Option: VoxelizerOption>: PrivateVoxelizerMethod<Option>
 {
+    ///　分解能を指定して新しいインスタンスを生成します。
     fn new(resolution: Resolution) -> Self;
+
+    /// 新しく点群を追加します。
+    /// この関数が呼ばれた時点で座標計算を行います。
     fn add<T: VoxelCollection<Option::InPoint, Option::Weight, Option::Color>>(&mut self, pc: T);
+
+    /// 最終的に指定された形式でボクセルデータを返します。
+    /// 出力されるボクセルは、座標値を整数値で表された原点から数えたボクセルの位置とし、ボクセルのサイズは分解能として保持します。
     fn finish(self) -> Option::OutVC;
 }
 
+/// 与えられた点群を指定された分解能でボクセル化するための最も単純な構造体です。
+/// 指定される分解能は[`Resolution::Mater`]である必要があります。
 pub struct SimpleVoxelizer<Option: VoxelizerOption>
 {
     field: Option::CalcVC,
@@ -60,6 +69,8 @@ where
     Option::InPoint: AsPrimitive<f64>,
     Option::Weight: AsPrimitive<Option::ColorPool>,
 {
+    /// 頂点が挿入されていない状態のインスタンスを返します。
+    /// 分解能は1.0mです。
     fn default() -> Self {
         Self {
             field: Option::CalcVC::default(),
@@ -116,6 +127,8 @@ where
     }
 }
 
+/// 与えられた点群をタイル座標を基準にボクセル化するための構造体です。
+/// 指定される分解能は[`Resolution::Tile`]である必要があります。
 pub struct MapTileVoxelizer<Option: VoxelizerOption>
 {
     // value: (Resolution, VoxelsCollection)
@@ -124,7 +137,9 @@ pub struct MapTileVoxelizer<Option: VoxelizerOption>
 }
 
 impl<Option: VoxelizerOption> MapTileVoxelizer<Option> {
-    fn finish_tiles(self) -> Vec<(Point2D<u32>, Option::OutVC)>
+    ///　出力をタイルごとに分割して返します。
+    /// タプルの1要素目としてタイル座標(x, y)、2要素目としてボクセルデータが格納されます。
+    pub fn finish_tiles(self) -> Vec<(Point2D<u32>, Option::OutVC)>
     where
         Option::Weight: AsPrimitive<Option::ColorPool>,
         Option::ColorPool: AsPrimitive<Option::Weight>,

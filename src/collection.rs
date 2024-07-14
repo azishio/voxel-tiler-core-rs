@@ -83,6 +83,7 @@ where
     resolution: f64,
 }
 
+/// ボクセルの集合を構築するためのビルダーです。
 impl<P, W, C, VC> BuildVoxelCollection<P, W, C, VC>
 where
     P: Number,
@@ -90,11 +91,19 @@ where
     C: UInt,
     VC: VoxelCollection<P, W, C>,
 {
+    /// <必須1>
+    /// 座標とボクセルのペアのリストを指定します。
+    /// このメソッドの代わりに`points`メソッドを使用することもできます。
+    /// 二度目以降の呼び出しでは、前回の呼び出しで指定された値は破棄されます。
     pub fn voxels(mut self, voxels: Vec<(Point3D<P>, Voxel<C, W>)>) -> Self {
         self.voxels = voxels;
         self
     }
 
+    /// <必須2>
+    /// 座標と色のペアのリストを指定します。
+    /// このメソッドの代わりに`voxels`メソッドを使用することもできます。
+    /// 二度目以降の呼び出しでは、前回の呼び出しで指定された値は破棄されます。
     pub fn points(mut self, points: Vec<(Point3D<P>, Color<C>)>) -> Self {
         self.voxels = points.into_iter().map(|(point, color)| {
             (point, Voxel::new(color))
@@ -102,26 +111,37 @@ where
         self
     }
 
+    /// <任意>
+    /// 登録されているすべての座標値から、最小値と最大値を計算して設定します。
+    /// このメソッドを使用しない場合、最小値と最大値が必要になった段階で自動的に計算されます。
+    /// すでに分かっている場合を除いて、わざわざ計算する必要はありません。
     pub fn bounds(mut self, bounds: (Point3D<P>, Point3D<P>)) -> Self {
         self.bounds = Some(bounds);
         self
     }
 
+    /// <任意>
+    /// 座標値のオフセットを指定します。
     pub fn offset(mut self, offset: Point3D<P>) -> Self {
         self.offset = offset;
         self
     }
 
+    /// <任意>
+    /// ボクセルの分解能を指定します。
+    /// このメソッドを使用しない場合、デフォルト値は1です。
     pub fn resolution(mut self, resolution: f64) -> Self {
         self.resolution = resolution;
         self
     }
 
+    /// 登録した内容を指定して、`VoxelCollection`を構築します。
     pub fn build(self) -> VC {
         VC::new(self.voxels, self.bounds, self.offset, self.resolution)
     }
 }
 
+///　ボクセルの集合や点群を操作するためのトレイトです。
 pub trait VoxelCollection<P, W, C>: PrivateVoxelCollectionMethod<P, W, C> + Default + Clone
 where
     P: Number,
@@ -129,6 +149,7 @@ where
     C: UInt,
     Self: Sized,
 {
+    /// インスタンスを生成するためのビルダーを返します。
     fn builder() -> BuildVoxelCollection<P, W, C, Self> {
         BuildVoxelCollection {
             _phantom: PhantomData,
@@ -139,10 +160,14 @@ where
         }
     }
 
+    /// すべての値を明示的に指定してインスタンスを生成します。
     fn new(voxels: Vec<(Point3D<P>, Voxel<C, W>)>, bounds: Option<(Point3D<P>, Point3D<P>)>, offset: Point3D<P>, resolution: f64) -> Self;
 
+    /// 現時点で境界が計算されてているかどうかを返します。
     fn has_bounds(&self) -> bool;
 
+    /// 境界がすでに計算されている場合は、その値を返します。
+    /// まだ計算されていない場合は、計算し、結果を保持します。
     fn get_bounds(&mut self) -> (Point3D<P>, Point3D<P>) {
         self.get_inner_bounds().unwrap_or_else(|| {
             let (min, max) = Self::calc_bounds(&self.to_vec());
@@ -154,11 +179,18 @@ where
         })
     }
 
+    /// 分解能を返します。
     fn get_resolution(&self) -> f64;
 
+    /// オフセットを返します。
     fn get_offset(&self) -> Point3D<P>;
+
+    /// オフセットを設定します。
+    /// 現在の値に加算されるのではなく、新しい値に置き換えられます。
     fn set_offset(&mut self, offset: Point3D<P>);
 
+    /// 登録されているすべての座標値のうち、各軸の最小値に合わせてオフセットを調整します。
+    /// すでに境界値が計算されている場合はその値を利用し、計算されていない場合は新たに計算して結果を保持します。
     fn offset_to_min(&mut self) {
         let current_offset = self.get_offset();
 
@@ -170,9 +202,21 @@ where
         }
     }
 
-
+    /// 登録されているすべての座標とボクセルのタプルを返します。
+    /// オフセットを適用した結果を得たい場合、`to_vec_with_offset`メソッドを使用してください。
+    /// `Voxel`の場合、`Voxel.color / Voxel.weight`で平均色を計算できます。
+    /// すでに平均が計算された色を取得したい場合は、`to_points`メソッドを使用してください。
     fn to_vec(&self) -> Vec<(Point3D<P>, Voxel<C, W>)>;
+
+    /// 登録されているすべての座標とボクセルのタプルを返します。
+    /// オフセットを適用した結果を得たい場合、`into_vec_with_offset`メソッドを使用してください。
+    /// `Voxel`の場合、`Voxel.color / Voxel.weight`で平均色を計算できます。
+    /// すでに平均が計算された色を取得したい場合は、`into_points`メソッドを使用してください。
     fn into_vec(self) -> Vec<(Point3D<P>, Voxel<C, W>)>;
+
+    /// 登録されているすべての座標とボクセルのタプルを返します。
+    /// 座標値には設定されているオフセットが加算されます。
+    /// すでに平均が計算された色を取得したい場合は、`to_points_with_offset`メソッドを使用してください。
     fn to_vec_with_offset(&self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
         let offset = self.get_offset();
         self.to_vec().into_iter().map(|(point, voxel)| {
@@ -180,6 +224,9 @@ where
         }).collect()
     }
 
+    /// 登録されているすべての座標とボクセルのタプルを返します。
+    /// 座標値には設定されているオフセットが加算されます。
+    /// すでに平均が計算された色を取得したい場合は、`into_points_with_offset`メソッドを使用してください。
     fn into_vec_with_offset(self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
         let offset = self.get_offset();
         self.into_vec().into_iter().map(|(point, voxel)| {
@@ -187,6 +234,7 @@ where
         }).collect()
     }
 
+    /// 登録されているすべてのボクセルの座標と、その色を返します。
     fn to_points(&self) -> Vec<(Point3D<P>, Color<C>)>
     where
         C: AsPrimitive<W>,
@@ -198,6 +246,7 @@ where
         }).collect()
     }
 
+    /// 登録されているすべてのボクセルの座標と、その色を返します。
     fn into_points(self) -> Vec<(Point3D<P>, Color<C>)>
     where
         C: AsPrimitive<W>,
@@ -209,6 +258,7 @@ where
         }).collect()
     }
 
+    /// 登録されているすべてのボクセルの座標にオフセットを加算したものと、その色のタプルを返します。
     fn to_points_with_offset(&self) -> Vec<(Point3D<P>, Color<C>)>
     where
         C: AsPrimitive<W>,
@@ -220,6 +270,7 @@ where
         }).collect()
     }
 
+    /// 登録されているすべてのボクセルの座標にオフセットを加算したものと、その色のタプルを返します。
     fn into_points_with_offset(self) -> Vec<(Point3D<P>, Color<C>)>
     where
         C: AsPrimitive<W>,
@@ -231,14 +282,39 @@ where
         }).collect()
     }
 
+    /// 現在のインスタンスに別の`VoxelCollection`を追加します。
+    /// メソッドの使用者側は2つの`VoxelCollection`の分解能が同じであることを保証する必要があります。
+    ///
+    /// `VoxelCollection`の種類によって、現在の境界外の座標値は無視されることがあります。
+    /// すべての値を追加したい場合、`merge`メソッドを使用してください。
+    ///
+    /// 以下の構造体は`insert`と`merge`の結果が同じであるため、より高速な`insert`メソッドを使用することを推奨します。
+    ///
+    /// + `PointCloud`
+    /// + `HMap3DVoxelCollection`
+    /// + `HMap2DVoxelCollection`
     fn insert<T: VoxelCollection<P, W, C>>(&mut self, pc: T) {
         pc.into_vec_with_offset().into_iter().for_each(|(point, voxel)| {
-            self.insert_one(point, voxel)
+            self.insert_one(point, voxel);
         });
     }
 
+    /// 現在のインスタンスに1点を追加します。
+    /// メソッドの使用者は挿入する点の分解能と`VoxelCollection`の分解能が同じであることを保証する必要があります。
     fn insert_one(&mut self, point: Point3D<P>, voxel: Voxel<C, W>);
 
+    /// 現在のインスタンスに別の`VoxelCollection`をマージします。
+    /// メソッドの使用者側は2つの`VoxelCollection`の分解能が同じであることを保証する必要があります。
+    /// `insert`と比較して、すべての値を確実に追加しますが、メモリの再割り当てが必要になるため低速であることが予想されます。
+    ///
+    /// 以下の構造体において、境界外の値を挿入する場合はこのメソッドを使用する必要があります。
+    ///
+    /// + `Vec3DVoxelCollection`
+    /// + `Vec2DVoxelCollection`
+    ///
+    /// # Errors
+    ///
+    /// + 2つの`VoxelCollection`の分解能が異なる場合、エラーを返します。
     fn merge<T: VoxelCollection<P, W, C>>(mut self, mut pc: T) -> Result<Self, anyhow::Error> {
         if self.get_resolution() != pc.get_resolution() {
             return Err(anyhow!("Resolution is different"));
@@ -259,12 +335,16 @@ where
         Ok(Self::new(voxels, new_bounds, Point3D::default(), resolution))
     }
 
+    /// 指定された座標値が登録されているかどうかを返します。
     fn has(&self, point: &Point3D<P>) -> bool;
 
+    /// 登録されているすべてのボクセルに対して、指定された関数を適用します。
     fn batch(&mut self, f: fn(&mut Voxel<C, W>));
 }
 
-
+/// ボクセルや点群の集合を表現するための構造体です。
+/// 内部的に配列を使用しているため、インスタンスの生成を高速で行える一方で、隣接する座標値の検索にはすべての要素を走査する必要があります。
+/// ボクセル化されていない点群を扱う場合などに使用することを推奨します。
 #[derive(Clone)]
 pub struct PointCloud<P: Number, W: UInt, C: UInt> {
     _phantom: PhantomData<W>,
@@ -275,6 +355,7 @@ pub struct PointCloud<P: Number, W: UInt, C: UInt> {
 }
 
 impl<P: Number, W: UInt, C: UInt> Default for PointCloud<P, W, C> {
+    /// 分解能を`1.`として、空のインスタンスを生成します。
     fn default() -> Self {
         PointCloud {
             _phantom: PhantomData,
@@ -347,7 +428,6 @@ where
         self.bounds = None;
     }
 
-
     fn has(&self, point: &Point3D<P>) -> bool {
         self.field.iter().any(|(p, _)| p == point)
     }
@@ -360,7 +440,9 @@ where
 }
 
 
-/// 内部的に2次元の`Vec<Vec<Vec<Voxel>>>`を使用してボクセルの集合を表現している。
+/// 内部的に3次元配列を使用してボクセルの集合を表現するための構造体です。
+/// 隣接する座標値の検索が高速で行える一方で、境界に合わせて多次元配列を構築するため多くのメモリが必要になります。
+/// また、境界外の値を挿入するにはメモリの再確保を行う必要があります。
 #[derive(Clone)]
 pub struct Vec3VoxelCollection<P, W, C>
 where
@@ -517,9 +599,10 @@ where
     }
 }
 
-/// 内部的に2次元の`Vec<Vec<(Height, Voxel)>>`を使用してボクセルの集合を表現している。
-/// ある平面座標において、異なる高さのボクセルは格納できない。
-/// 地表面など、ある平面座標において高さが一意に定まる場合に使用する。
+/// 内部的に2次元配列を使用してボクセルの集合を表現するための構造体です。
+/// 平面座標ごとに1つの高さしか持てませんが、`Vec3VoxelCollection`よりもメモリ効率が良いです。
+/// 隣接する座標値の検索を高速に行えます。
+/// また、境界外の値を挿入するにはメモリの再確保を行う必要があります。
 #[derive(Clone)]
 pub struct Vec2VoxelCollection<P, W, C>
 where
@@ -727,7 +810,9 @@ where
     }
 }
 
-/// 内部的に`DashMap<Point3D, Voxel, BuildHasherDefault<FxHasher>>`を使用してボクセルの集合を表現している。
+/// 内部的にハッシュマップを使用して座標を管理しています。
+/// 1点挿入するごとにハッシュ値を計算するため、`Vec3VoxelCollection`よりも低速であることが予想されますが、境界外の値を挿入する際にメモリの再確保が不要です。
+/// 隣接点の検索は1回のハッシュ値計算で行えるため、`PointCloud`よりも高速です。
 #[derive(Clone)]
 pub struct HMap3DVoxelCollection<P, W, C, BH>
 where
@@ -852,9 +937,10 @@ where
     }
 }
 
-/// 内部的に`DashMap<Point2D, (Height, Voxel), BuildHasherDefault<FxHasher>>`を使用してボクセルの集合を表現している。
-/// ある平面座標において、異なる高さのボクセルは格納できない。
-/// 地表面など、ある平面座標において高さが一意に定まる場合に使用する。
+/// 内部的にハッシュマップを使用して平面座標と高さを管理しています。
+/// 1点の平面座標に対して1つの高さしか持てないという制約があります。
+/// 1点挿入するごとにハッシュ値を計算するため、`Vec2VoxelCollection`よりも低速であることが予想されますが、境界外の値を挿入する際にメモリの再確保が不要です。
+/// 隣接点の検索は1回のハッシュ値計算で行えるため、`PointCloud`よりも高速です。
 #[derive(Clone)]
 pub struct HMap2DVoxelCollection<P, W, C, BH>
 where

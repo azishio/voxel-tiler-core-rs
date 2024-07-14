@@ -4,9 +4,10 @@ use std::default::Default;
 use std::mem;
 
 use anyhow::anyhow;
-use gltf::{Glb, Semantic};
 use gltf::binary::Header;
 use gltf::buffer::Target::{ArrayBuffer, ElementArrayBuffer};
+/// [`gltf::Glb`]に[`VoxelMesh`]からインスタンスを生成するメソッドを追加しています。
+pub use gltf::Glb;
 use gltf::json::{Accessor, Buffer, Image, Material, Mesh, Node, Root, Scene, Texture, Value};
 use gltf::json::accessor::{ComponentType, GenericComponentType, Type};
 use gltf::json::buffer::{Stride, View};
@@ -17,6 +18,7 @@ use gltf::json::texture::{Info, Sampler};
 use gltf::json::validation::Checked::Valid;
 use gltf::json::validation::USize64;
 use gltf::mesh::Mode;
+use gltf::Semantic;
 use gltf::texture::{MagFilter, MinFilter};
 use num::cast::AsPrimitive;
 
@@ -105,6 +107,7 @@ mod private {
 
 
 pub trait GlbGen<'a>: GlbGenPrivateMethod {
+    /// ボクセルメッシュから[`Glb`]のインスタンスを生成します。
     fn from_voxel_mesh<P, C>(voxel_mesh: VoxelMesh<P, C>) -> Result<Glb<'a>, anyhow::Error>
     where
         P: Int + AsPrimitive<f32>,
@@ -284,6 +287,8 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
         })
     }
 
+    /// ボクセルメッシュからz軸に対してテクスチャを投影した[`Glb`]のインスタンスを生成します。
+    /// この場合、面に割り当てられた色情報は無視されます。
     fn from_voxel_mesh_with_texture_projected_z<P, C>(voxel_mesh: VoxelMesh<P, C>, texture: TextureInfo) -> Result<Glb<'a>, anyhow::Error>
     where
         P: Int + AsPrimitive<f32> + AsPrimitive<isize>,

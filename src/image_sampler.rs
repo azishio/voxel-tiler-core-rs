@@ -7,10 +7,16 @@ use crate::element::{Color, Point3D};
 
 /// 画像のピクセルごとの分解能を決定するための基準です。
 pub enum AltitudeResolutionCriteria {
+    /// ズームレベルによって分解能を決定します。
+    /// この場合、日本の経緯度原点の緯度を基準に分解能を計算します。
     ZoomLv(ZoomLv),
+
+    /// 緯度とズームレベルによって分解能を決定します。
+    /// `ZoomLv`を指定した場合よりも分解能を正確に計算できます。
     Lat(f64, ZoomLv),
 }
 
+/// 国土地理院が公開する標高タイルを用いてボクセルデータを生成するための構造体です。
 pub struct JTerrainImageSampler;
 
 impl JTerrainImageSampler {

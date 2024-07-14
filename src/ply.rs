@@ -13,8 +13,6 @@ use crate::collection::{PointCloud, VoxelCollection};
 use crate::element::{Color, Int, Point3D, UInt};
 use crate::voxel_mesh::VoxelMesh;
 
-/// Structure representing a single vertex in a Ply file
-///
 /// Plyファイルにおける1つの頂点を表す構造体
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Vertex {
@@ -45,8 +43,6 @@ impl PropertyAccess for Vertex {
 }
 
 
-/// Structure representing a single face in a Ply file
-///
 /// Plyファイルにおける1つの面を表す構造体
 #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
 pub struct Face {
@@ -71,6 +67,8 @@ where
     W: UInt + AsPrimitive<u8>,
     u8: AsPrimitive<W>,
 {
+    /// plyファイルから点群を読み込みます。
+    /// 使用するには`ply`featureを有効にしてください。
     pub fn from_ply<T: Read>(file: T) -> Self {
         let mut buf_reader = BufReader::new(file);
 
@@ -93,9 +91,8 @@ where
     }
 }
 
-/// Structure with information necessary to generate Ply format data
-///
 /// Ply形式のデータを生成するために必要な情報を持つ構造体
+/// 使用するには`ply`featureを有効にしてください。
 #[derive(Clone, Debug, Default)]
 pub struct PlyStructs {
     vertices: Vec<Vertex>,
@@ -103,9 +100,7 @@ pub struct PlyStructs {
 }
 
 impl PlyStructs {
-    /// Generate PlyStructs with vertices and faces
-    ///
-    /// 頂点と面を指定してPlyStructsを生成
+    /// 頂点と面を指定してインスタンスを生成します。
     pub fn new(vertices: Vec<Vertex>, faces: Vec<Face>) -> Self {
         Self {
             vertices,
@@ -114,9 +109,7 @@ impl PlyStructs {
     }
 
 
-    /// Generate PlyStructs from VoxelMesh
-    ///
-    /// VoxelMeshからPlyStructsを生成
+    /// [`VoxelMesh`]からインスタンスを生成
     pub fn from_voxel_mesh<P: Int, C: UInt>(voxel_mesh: VoxelMesh<P, C>) -> Self
     where
         P: Int + AsPrimitive<f32>,
@@ -158,6 +151,7 @@ impl PlyStructs {
         }
     }
 
+    /// ASCII形式のplyファイルのバッファを返します。
     pub fn into_ascii_buf(self) -> Vec<u8> {
         let mut ply = {
             let mut ply = Ply::<DefaultElement>::new();

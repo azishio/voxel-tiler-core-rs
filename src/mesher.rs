@@ -6,20 +6,38 @@ use crate::element::{Int, Point, Point3D, UInt};
 use crate::voxel_mesh::VoxelMesh;
 
 bitflags! {
+    /// ボクセルの有効な面を表すビットフラグです。
+    /// このフラグが立っている面にのみメッシュを生成します。
+    /// 具体的なフラグの使用方法は[`bitflags`]のドキュメントを参照してください。
         pub struct ValidSide: u8 {
+        /// 上面
             const TOP = 0b00000001;
+        
+        /// 下面
             const BOTTOM = 0b00000010;
+        
+        /// 左面
             const LEFT = 0b00000100;
+        
+        /// 右面
             const RIGHT = 0b00001000;
+        
+        /// 前面
             const FRONT = 0b00010000;
+        
+        /// 後面
             const BACK = 0b00100000;
+        
+        /// 境界
             const BORDER = 0b01000000;
         }
     }
 
+/// ボクセルメッシュを生成するための構造体です。
 pub struct Mesher;
 impl Mesher
 {
+    /// ボクセルメッシュを生成します。
     pub fn meshing<P, W, C, VCF>(mut vc: VCF, valid_side: ValidSide) -> VoxelMesh<P, C>
     where
         P: Int + AsPrimitive<i32>,

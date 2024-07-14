@@ -6,6 +6,7 @@ use num::cast::AsPrimitive;
 
 use crate::element::{Color, Int, Point3D, UInt};
 
+/// メッシュが貼られたボクセルを表す構造体です。
 #[derive(Default, Debug, Clone)]
 pub struct VoxelMesh<P: Int, C: UInt> {
     pub(crate) bounds: (Point3D<P>, Point3D<P>),
@@ -21,6 +22,7 @@ where
     C: UInt + AsPrimitive<f32>,
     f32: AsPrimitive<P>,
 {
+    ///[`simplify_decoder`]を使用してメッシュを簡略化します。
     pub fn simplify(self) -> Self
     {
         let VoxelMesh { points, faces, bounds, offset, resolution, .. } = self;
