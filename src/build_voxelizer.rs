@@ -2,9 +2,9 @@ use std::marker::PhantomData;
 
 use fxhash::FxBuildHasher;
 use num::cast::AsPrimitive;
-use ordered_float::{NotNan, OrderedFloat};
+use ordered_float::OrderedFloat;
 
-use crate::collection::{HMap3DVoxelCollection, Vec2VoxelCollection, Vec3VoxelCollection, VoxelCollection};
+use crate::collection::{HMap3DVoxelCollection, VoxelCollection};
 use crate::element::{Int, Number, UInt};
 use crate::voxelizer::{MapTileVoxelizer, Resolution, SimpleVoxelizer, Voxelizer};
 
@@ -71,38 +71,19 @@ pub type BuildSimpleVoxelizerDefault = BuildVoxelizerDefault<SimpleVoxelizer<Sim
 pub struct MapTileVoxelizerDefaultOptions {}
 
 impl VoxelizerOption for MapTileVoxelizerDefaultOptions
-where
-    NotNan<f32>: AsPrimitive<f64>,
 {
-    type InPoint = OrderedFloat<f32>;
+    type InPoint = OrderedFloat<f64>;
     type OutPoint = i32;
-    type Color = u8;
+    type Color = u16;
     type Weight = u8;
-    type ColorPool = u16;
-    type CalcVC = Vec3VoxelCollection<Self::OutPoint, Self::Weight, Self::ColorPool>;
-    type OutVC = Vec3VoxelCollection<Self::OutPoint, Self::Weight, Self::Color>;
+    type ColorPool = u32;
+    type CalcVC = HMap3DVoxelCollection<Self::OutPoint, Self::Weight, Self::ColorPool, FxBuildHasher>;
+    type OutVC = HMap3DVoxelCollection<Self::OutPoint, Self::Weight, Self::Color, FxBuildHasher>;
 }
 
 /// [`MapTileVoxelizer`]のインスタンスを標準オプションで生成する構造体です。
 pub type BuildMapTileVoxelizerDefault = BuildVoxelizerDefault<MapTileVoxelizer<MapTileVoxelizerDefaultOptions>, MapTileVoxelizerDefaultOptions>;
 
-/// 地形データなど、同一の平面座標において複数の高さを持たない点群をボクセル化するための標準オプションです。
-/// 高低差が激しい地形などはボクセルが不連続になるため、このオプションを使用することは適していません。
-pub struct TerrainTileVoxelizerDefaultOptions {}
-
-impl VoxelizerOption for TerrainTileVoxelizerDefaultOptions
-{
-    type InPoint = OrderedFloat<f64>;
-    type OutPoint = i32;
-    type Color = u8;
-    type Weight = u8;
-    type ColorPool = u16;
-    type CalcVC = Vec2VoxelCollection<Self::OutPoint, Self::Weight, Self::ColorPool>;
-    type OutVC = Vec2VoxelCollection<Self::OutPoint, Self::Weight, Self::Color>;
-}
-
-/// [`MapTileVoxelizer`]のインスタンスを[`TerrainTileVoxelizerDefaultOptions`]で生成する構造体です。
-pub type BuildTerrainTileVoxelizerDefault = BuildVoxelizerDefault<MapTileVoxelizer<TerrainTileVoxelizerDefaultOptions>, TerrainTileVoxelizerDefaultOptions>;
 
 /// ボクセライザーのオプションを表すトレイトです。
 pub trait VoxelizerOption
