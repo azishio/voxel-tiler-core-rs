@@ -26,7 +26,8 @@ fxhash = "0.2.1"
 gltf = "1.4.1"
 image = { version = "0.25.1", optional = true }
 indexmap = "2.2.6"
-las = { version = "0.8.7", optional = true }
+las = { version = "0.8.7", optional = true, features = ["laz"] }
+laz = { version = "0.9.1", optional = true }
 meshopt = "0.3.0"
 nohash = "0.2.0"
 num = "0.4.3"
@@ -44,17 +45,22 @@ criterion = "0.5.1"
 default = ["jamalloc"]
 jamalloc = ["dep:tikv-jemallocator"]
 ply = ["dep:ply-rs"]
-las = ["dep:las"]
+las = ["dep:las", "dep:laz"]
 image = ["dep:image"]
 
 [[example]]
-name = "point-cloud"
+name = "terain"
+path = "examples/generate_terrain_glb.rs"
+required-features = ["image"]
+
+[[example]]
+name = "tile"
 path = "examples/point_cloud_to_voxel_tile.rs"
 required-features = ["las"]
 
 [[example]]
 name = "bunny"
-path = "examples/bunny.rs"
+path = "examples/generate_voxel_bunny.rs"
 required-features = ["ply"]
 
 [package.metadata.docs.rs]

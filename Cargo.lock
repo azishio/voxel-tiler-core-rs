@@ -765,9 +765,20 @@ checksum = "89e399f33abb45b5d8cc1bf6191deb2ff11468d1ef25861cba9b8a1ae37bec7b"
 dependencies = [
  "byteorder",
  "chrono",
+ "laz",
  "num-traits",
  "thiserror",
  "uuid",
+]
+
+[[package]]
+name = "laz"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cde6dae9a2deef3214c143fdda9414d2b9886483604e3907e894becd96acd263"
+dependencies = [
+ "byteorder",
+ "num-traits",
 ]
 
 [[package]]
@@ -1685,6 +1696,7 @@ dependencies = [
  "image",
  "indexmap",
  "las",
+ "laz",
  "meshopt",
  "nohash",
  "num",
