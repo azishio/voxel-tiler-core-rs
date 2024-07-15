@@ -52,6 +52,11 @@ pub struct TextureInfo {
     pub mime_type: Mime,
 }
 
+/// 現在のボクセルメッシュの色情報の表現モードを表す列挙型です。
+pub enum ColorMode {
+    Srgb,
+    Linear,
+}
 
 mod private {
     use std::mem;
@@ -77,6 +82,23 @@ mod private {
 
             [r, g, b, a]
         }
+
+        fn liner_rgb_to_srgb<C>(color: Color<C>) -> [f32; 4]
+        where
+            C: UInt + AsPrimitive<f32>,
+            f32: AsPrimitive<C>,
+        {
+            let color = color.as_::<f32>();
+            let max: f32 = C::max_value().as_();
+
+            let r = color[0] / max;
+            let g = color[1] / max;
+            let b = color[2] / max;
+            let a = 1.;
+
+            [r, g, b, a]
+        }
+
         fn convert_to_byte_vec<T>(vec: Vec<T>) -> Vec<u8> {
             let byte_length = vec.len() * mem::size_of::<T>();
             let alloc = vec.into_boxed_slice();
@@ -114,7 +136,7 @@ mod private {
 
 pub trait GlbGen<'a>: GlbGenPrivateMethod {
     /// ボクセルメッシュから[`Glb`]のインスタンスを生成します。
-    fn from_voxel_mesh<P, C>(voxel_mesh: VoxelMesh<P, C>) -> Result<Glb<'a>, anyhow::Error>
+    fn from_voxel_mesh<P, C>(voxel_mesh: VoxelMesh<P, C>, color_mode: ColorMode) -> Result<Glb<'a>, anyhow::Error>
     where
         P: Int + AsPrimitive<f32>,
         C: UInt + AsPrimitive<f32>,
@@ -129,7 +151,11 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
         }).collect::<Vec<_>>();
 
         let (colors, indices): (Vec<_>, Vec<_>) = voxel_mesh.faces.into_iter().map(|(color, vertex_ids)| {
-            let color = Self::srgb_to_liner_rgba(color);
+            let color = match color_mode {
+                ColorMode::Srgb => Self::srgb_to_liner_rgba(color),
+                ColorMode::Linear => Self::liner_rgb_to_srgb(color)
+            };
+
             let vertex_ids = vertex_ids.into_iter().map(|vertex_id| {
                 vertex_id as u32
             }).collect::<Vec<_>>();

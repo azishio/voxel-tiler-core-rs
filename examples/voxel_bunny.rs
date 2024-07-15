@@ -7,7 +7,7 @@ use gltf::Glb;
 
 use voxel_tiler_core::build_voxelizer::{BuildSimpleVoxelizerDefault, BuildVoxelizer};
 use voxel_tiler_core::collection::PointCloud;
-use voxel_tiler_core::glb::GlbGen;
+use voxel_tiler_core::glb::{ColorMode, GlbGen};
 use voxel_tiler_core::mesh::{Mesher, ValidSide};
 use voxel_tiler_core::ply::PlyStructs;
 use voxel_tiler_core::voxelizer::Resolution;
@@ -25,7 +25,7 @@ fn main()
     let mesh = Mesher::meshing(voxel_collection, ValidSide::all()).simplify();
 
     {
-        let glb = Glb::from_voxel_mesh(mesh.clone()).unwrap();
+        let glb = Glb::from_voxel_mesh(mesh.clone(), ColorMode::Srgb).unwrap();
 
         let writer = File::create("examples/exports/bunny.glb").expect("I/O error");
         glb.to_writer(writer).expect("glTF binary output error");
