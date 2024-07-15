@@ -192,14 +192,9 @@ where
     /// 登録されているすべての座標値のうち、各軸の最小値に合わせてオフセットを調整します。
     /// すでに境界値が計算されている場合はその値を利用し、計算されていない場合は新たに計算して結果を保持します。
     fn offset_to_min(&mut self) {
-        let current_offset = self.get_offset();
-
         let (min, _max) = self.get_bounds();
 
-        if current_offset != min {
-            let offset = min - current_offset;
-            self.set_offset(offset);
-        }
+        self.set_offset(min);
     }
 
     /// 登録されているすべての座標とボクセルのタプルを返します。
@@ -220,7 +215,7 @@ where
     fn to_vec_with_offset(&self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
         let offset = self.get_offset();
         self.to_vec().into_iter().map(|(point, voxel)| {
-            (point + offset, voxel)
+            (point - offset, voxel)
         }).collect()
     }
 
@@ -230,7 +225,7 @@ where
     fn into_vec_with_offset(self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
         let offset = self.get_offset();
         self.into_vec().into_iter().map(|(point, voxel)| {
-            (point + offset, voxel)
+            (point - offset, voxel)
         }).collect()
     }
 
@@ -542,7 +537,7 @@ where
                     (point, *voxel)
                 })
             })
-        }).collect()
+        }).filter(|(_, voxel)| voxel.weight.ne(&W::zero())).collect()
     }
 
     fn into_vec(self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
@@ -553,7 +548,7 @@ where
                     (point, voxel)
                 })
             })
-        }).collect()
+        }).filter(|(_, voxel)| voxel.weight.ne(&W::zero())).collect()
     }
 
 
@@ -752,7 +747,7 @@ where
                 let point = Point3D::new([x, y, *z]);
                 (point, *voxel)
             })
-        }).collect()
+        }).filter(|(_, voxel)| voxel.weight.ne(&W::zero())).collect()
     }
 
     fn into_vec(self) -> Vec<(Point3D<P>, Voxel<C, W>)> {
@@ -766,7 +761,7 @@ where
                 let point = Point3D::new([x, y, z]);
                 (point, voxel)
             })
-        }).collect()
+        }).filter(|(_, voxel)| voxel.weight.ne(&W::zero())).collect()
     }
 
     fn insert_one(&mut self, point: Point3D<P>, voxel: Voxel<C, W>) {

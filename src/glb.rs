@@ -22,7 +22,7 @@ use gltf::Semantic;
 use gltf::texture::{MagFilter, MinFilter};
 use num::cast::AsPrimitive;
 
-use crate::element::{Int, UInt};
+use crate::element::{Int, Point3D, UInt};
 use crate::glb::private::GlbGenPrivateMethod;
 use crate::mesh::VoxelMesh;
 
@@ -261,7 +261,7 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
 
         let node = root.push(Node {
             mesh: Some(mesh),
-            translation: Some(voxel_mesh.offset.as_::<f32>().data),
+            translation: Some((voxel_mesh.offset.as_::<f32>() * Point3D::from(-1.)).data),
             scale: Some([voxel_mesh.resolution as f32; 3]),
             ..Default::default()
         });
@@ -314,10 +314,9 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
 
         let uv = {
             let (min, max) = voxel_mesh.bounds;
-            let offset = min + voxel_mesh.offset;
 
             voxel_mesh.points.iter().map(|&point| {
-                let p = (point - offset).as_::<isize>();
+                let p = (point - min).as_::<isize>();
 
                 let normalized = p.as_::<f32>() / (max - min).as_::<f32>();
 

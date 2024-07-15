@@ -119,7 +119,7 @@ impl PlyStructs {
     {
         let VoxelMesh { points, faces, offset, resolution, .. } = voxel_mesh;
 
-        let points = points.into_iter().map(|p| (p + offset).as_() * resolution as f32).collect::<Vec<_>>();
+        let points = points.into_iter().map(|p| (p - offset).as_() * resolution as f32).collect::<Vec<_>>();
 
         let mut vertex_set = IndexSet::<Vertex, FxBuildHasher>::with_hasher(Default::default());
 
