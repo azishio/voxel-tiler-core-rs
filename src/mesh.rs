@@ -1,143 +1,170 @@
-use std::collections::HashSet;
-use std::hash::Hash;
-
+use bitflags::bitflags;
+use dashmap::DashMap;
 use fxhash::FxBuildHasher;
 use indexmap::IndexSet;
-use num::Num;
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
-use vec_x::VecX;
+use meshopt::{simplify_decoder, SimplifyOptions};
+use num::cast::AsPrimitive;
 
-use crate::{Point, VoxelCollection};
+use crate::collection::VoxelCollection;
+use crate::element::{Color, Int, Point, Point3D, UInt};
 
-pub type VertexIndices = Vec<usize>;
-
-type Coord<T> = VecX<T, 3>;
-
-/// a structure that holds information about the mesh representing the voxel
-///
-/// ボクセルを表現するメッシュの情報を保持する構造体
-#[derive(Clone, Debug)]
-pub struct VoxelMesh<T>
-    where T: Num + Sized + Send
-{
-    /// Unique (coordinates,color) list
-    ///
-    /// 一意な(座標,色)のリスト
-    pub vertices: Vec<Point<T>>,
-
-    /// List of indices of the vertices that make up the face
-    ///
-    /// 面を構成する頂点のインデックスのリスト
-    pub face: Vec<VertexIndices>,
+/// メッシュが貼られたボクセルを表す構造体です。
+#[derive(Default, Debug, Clone)]
+pub struct VoxelMesh<P: Int, C: UInt> {
+    pub(crate) bounds: (Point3D<P>, Point3D<P>),
+    pub(crate) offset: Point3D<P>,
+    pub(crate) points: IndexSet<Point3D<P>, FxBuildHasher>,
+    pub(crate) faces: DashMap<Color<C>, Vec<usize>, FxBuildHasher>,
+    pub(crate) resolution: f64,
 }
 
-impl<T> VoxelMesh<T>
-    where
-        T: Num + Sized + Send + Copy + Eq + Hash
+impl<P: Int, C: UInt> VoxelMesh<P, C>
+where
+    P: Int + AsPrimitive<f32>,
+    C: UInt + AsPrimitive<f32>,
+    f32: AsPrimitive<P>,
 {
-    /// Generate a mesh
-    ///
-    /// メッシュを生成する
-    pub fn new(vertices: Vec<Point<T>>, face: Vec<VertexIndices>) -> Self {
-        Self {
-            vertices,
-            face,
+    /// [`simplify_decoder`]を使用してメッシュを簡略化します。
+    /// 連続した同色の平面ごとに簡略化を行います。
+    pub fn simplify(self) -> Self
+    {
+        let VoxelMesh { points, faces, bounds, offset, resolution, .. } = self;
+
+        let point_f32: Vec<[f32; 3]> = points.iter()
+            .map(|point| point.as_::<f32>().data)
+            .collect();
+
+        let mut new_points = IndexSet::<Point3D<P>, FxBuildHasher>::with_hasher(Default::default());
+
+        let simplified_points = faces.into_iter().map(|(color, indices)| {
+            let indices: Vec<u32> = indices.into_iter()
+                .filter_map(|i| i.try_into().ok()).collect();
+
+            let new_indices = simplify_decoder(&indices, &point_f32, 0, 0.05, SimplifyOptions::all(), None)
+                .into_iter().map(|i| {
+                new_points.insert_full(points[i as usize]).0
+            }).collect::<Vec<_>>();
+
+            (color, new_indices)
+        }).collect::<DashMap<_, _, _>>();
+
+
+        VoxelMesh {
+            bounds,
+            offset,
+            points: new_points,
+            faces: simplified_points,
+            resolution,
+        }
+    }
+}
+
+bitflags! {
+    /// ボクセルの有効な面を表すビットフラグです。
+    /// このフラグが立っている面にのみメッシュを生成します。
+    /// 具体的なフラグの使用方法は[`bitflags`]のドキュメントを参照してください。
+        pub struct ValidSide: u8 {
+        /// 上面
+            const TOP = 0b00000001;
+
+        /// 下面
+            const BOTTOM = 0b00000010;
+
+        /// 左面
+            const LEFT = 0b00000100;
+
+        /// 右面
+            const RIGHT = 0b00001000;
+
+        /// 前面
+            const FRONT = 0b00010000;
+
+        /// 後面
+            const BACK = 0b00100000;
+
+        /// 境界
+            const BORDER = 0b01000000;
         }
     }
 
-    /// Generate an empty mesh
-    ///
-    /// 空のメッシュを生成する
-    pub fn empty() -> Self {
-        Self {
-            vertices: Vec::new(),
-            face: Vec::new(),
-        }
-    }
 
-    /// Converts voxel data into a list of rectangular polygons that retain their detail.
-    ///
-    /// ボクセルデータを、そのディティールを保持した四角形ポリゴンのリストに変換します。
-    pub fn from_voxel_collection(voxel_collection: VoxelCollection) -> VoxelMesh<u32> {
-        let voxels = voxel_collection.voxels;
 
-        let voxel_set = HashSet::<Coord<u32>, FxBuildHasher>::from_iter(voxels.iter().map(|(pixel_coord, _)| *pixel_coord));
+/// ボクセルメッシュを生成するための構造体です。
+pub struct Mesher;
 
-        let mut vertex_set = IndexSet::<Point<u32>, FxBuildHasher>::with_hasher(FxBuildHasher::default());
+impl Mesher
+{
+    /// ボクセルメッシュを生成します。
+    pub fn meshing<P, W, C, VCF>(mut vc: VCF, valid_side: ValidSide) -> VoxelMesh<P, C>
+    where
+        P: Int + AsPrimitive<i32>,
+        W: UInt + AsPrimitive<C>,
+        C: UInt + AsPrimitive<W>,
+        VCF: VoxelCollection<P, W, C>,
+        i32: AsPrimitive<P>,
+    {
+        let mut mesh = VoxelMesh {
+            bounds: vc.get_bounds(),
+            offset: vc.get_offset(),
+            resolution: vc.get_resolution(),
+            ..Default::default()
+        };
 
-        let face_list = voxels.into_iter().flat_map(|(pixel_coord, rgb)| {
-            let x = pixel_coord[0];
-            let y = pixel_coord[1];
-            let z = pixel_coord[2];
+        // ボクセルのAABBから頂点のAABBにったため
+        mesh.bounds.1 += P::one();
 
-            [
-                ([(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)], voxel_set.contains(&Coord::new([x + 1, y, z]))),
-                ([(0, 0, 0), (0, 1, 0), (0, 1, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x - 1, y, z]))),
-                ([(0, 1, 0), (1, 1, 0), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y + 1, z]))),
-                ([(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)], voxel_set.contains(&Coord::new([x, y - 1, z]))),
-                ([(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)], voxel_set.contains(&Coord::new([x, y, z + 1]))),
-                ([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)], voxel_set.contains(&Coord::new([x, y, z - 1]))),
-            ].iter().filter_map(|(vertexes, has_adjacent)| {
-                if *has_adjacent {
-                    None
-                } else {
-                    let vertex_list = vertexes.iter().map(|(dx, dy, dz)| Coord::new([x + dx, y + dy, z + dz]));
 
-                    let vertex_indices = vertex_list.map(|vertex| vertex_set.insert_full((vertex, rgb)).0).collect::<Vec<_>>();
-
-                    Some(vertex_indices)
+        let is_required = |neighbor: Option<Point3D<P>>| {
+            if let Some(neighbor) = neighbor {
+                // 隣接ボクセルが存在する場合
+                if vc.has(&neighbor) {
+                    return false;
                 }
-            }).collect::<Vec<_>>()
-        }).collect::<Vec<_>>();
+            };
+            true
+        };
 
-        let vertices = vertex_set.into_iter().collect::<Vec<_>>();
+        let on_border = |point: Point3D<P>| -> bool{
+            let (min, max) = mesh.bounds;
 
-        VoxelMesh {
-            vertices,
-            face: face_list,
-        }
-    }
+            point[0] == min[0] || point[0] == max[0] ||
+                point[1] == min[1] || point[1] == max[1] ||
+                point[2] == min[2] || point[2] == max[2]
+        };
 
-    /// Returns the result of applying the specified function to all vertices.
-    /// For example, it can be used to transform the coordinate system of a vertex.
-    ///
-    /// 全ての頂点について、指定された関数を適用した結果を返します。
-    /// 例えば、頂点の座標系を変換する場合に使用できます。
-    #[cfg(not(feature = "rayon"))]
-    pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
-        where
-            U: Num + Sized + Send,
-            F: Fn(Point<T>) -> Point<U> + Sync + Send,
-    {
-        let Self { vertices, face } = self;
+        vc.to_points().into_iter().for_each(|(point, color)| {
+            let unit_faces = [
+                (valid_side.contains(ValidSide::LEFT), [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 1), (0, 1, 0), (0, 0, 0)], is_required(point.left())),
+                (valid_side.contains(ValidSide::RIGHT), [(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 1, 1), (1, 0, 1), (1, 0, 0)], is_required(point.right())),
+                (valid_side.contains(ValidSide::BOTTOM), [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 1, 0), (1, 0, 0), (0, 0, 0)], is_required(point.bottom())),
+                (valid_side.contains(ValidSide::TOP), [(0, 0, 1), (1, 0, 1), (1, 1, 1), (1, 1, 1), (0, 1, 1), (0, 0, 1)], is_required(point.top())),
+                (valid_side.contains(ValidSide::BACK), [(0, 0, 0), (1, 0, 0), (1, 0, 1), (1, 0, 1), (0, 0, 1), (0, 0, 0)], is_required(point.back())),
+                (valid_side.contains(ValidSide::FRONT), [(1, 1, 1), (1, 1, 0), (0, 1, 0), (0, 1, 0), (0, 1, 1), (1, 1, 1)], is_required(point.front())),
+            ].into_iter()
+                .filter(|&(valid, _, required)| valid && required)
+                .filter_map(|(_, delta, _)| {
+                    let vertices = delta.into_iter().map(|(dx, dy, dz)| {
+                        point + Point3D::new([dx, dy, dz]).as_()
+                    });
 
-        let vertices = vertices.into_iter().map(f).collect::<Vec<_>>();
+                    if !valid_side.contains(ValidSide::BORDER) {
+                        if vertices.clone().any(on_border) {
+                            return None;
+                        }
+                    }
 
-        VoxelMesh {
-            vertices,
-            face,
-        }
-    }
+                    Some(vertices)
+                }).flatten().collect::<Vec<_>>();
 
-    /// Returns the result of applying the specified function to all vertices.
-    /// For example, it can be used to transform the coordinate system of a vertex.
-    ///
-    /// 全ての頂点について、指定された関数を適用した結果を返します。
-    /// 例えば、頂点の座標系を変換する場合に使用できます。
-    #[cfg(feature = "rayon")]
-    pub fn batch_to_vertices<U, F>(self, f: F) -> VoxelMesh<U>
-        where
-            U: Num + Sized + Send,
-            F: Fn(Point<T>) -> Point<U> + Sync + Send,
-    {
-        let Self { vertices, face } = self;
+            if unit_faces.is_empty() {
+                return;
+            }
 
-        let vertices = vertices.into_par_iter().map(f).collect::<Vec<_>>();
+            let mut vertex_indices = unit_faces.into_iter().map(|point| mesh.points.insert_full(point).0);
 
-        VoxelMesh {
-            vertices,
-            face,
-        }
+            mesh.faces.entry(color).and_modify(|t| t.extend(&mut vertex_indices)).or_insert(vertex_indices.collect());
+        });
+
+        mesh
     }
 }
