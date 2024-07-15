@@ -1,6 +1,6 @@
 extern crate voxel_tiler_core;
 
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::{BufReader, Write};
 
 use gltf::Glb;
@@ -23,6 +23,8 @@ fn main()
     let voxel_collection = BuildSimpleVoxelizerDefault::voxelize_one(point_cloud, resolution);
 
     let mesh = Mesher::meshing(voxel_collection, ValidSide::all()).simplify();
+
+    create_dir_all("examples/exports").expect("I/O error");
 
     {
         let glb = Glb::from_voxel_mesh(mesh.clone(), ColorMode::Srgb).unwrap();

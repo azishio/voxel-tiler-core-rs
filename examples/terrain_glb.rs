@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::{Read, Write};
 
 use coordinate_transformer::ZoomLv;
@@ -27,6 +27,8 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     let glb = Glb::from_voxel_mesh_with_texture_projected_z(mesh, texture)?;
+
+    create_dir_all("examples/exports").expect("I/O error");
 
     let mut writer = File::create("examples/exports/terrain.glb")?;
     glb.to_writer(&mut writer)?;
