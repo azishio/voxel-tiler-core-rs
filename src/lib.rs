@@ -5,6 +5,7 @@ pub use gltf;
 #[cfg_attr(docsrs, doc(cfg(feature = "image")))]
 #[cfg(feature = "image")]
 pub use image;
+pub use ordered_float;
 #[cfg(not(target_env = "msvc"))]
 #[cfg(feature = "jamalloc")]
 use tikv_jemallocator::Jemalloc;
@@ -40,4 +41,4 @@ pub mod mesh;
 /// 使用するには`las`featureを有効にしてください。
 #[cfg_attr(docsrs, doc(cfg(feature = "las")))]
 #[cfg(feature = "las")]
-mod las;
+pub mod las;
