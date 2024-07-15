@@ -154,6 +154,25 @@ impl<Option: VoxelizerOption> MapTileVoxelizer<Option> {
             (tile, Option::OutVC::new(voxels, Some(bounds), offset, resolution))
         }).collect::<Vec<_>>()
     }
+
+    /// ボクセルを内包する最小のタイルに合わせてオフセットを調整します。
+    pub fn fit_offset_to_min_tile(&mut self)
+    where
+        Option::OutPoint: AsPrimitive<u32>,
+        u32: AsPrimitive<Option::OutPoint>,
+    {
+        let min_tile = self.field.iter()
+            .map(|tile| { *tile.key() })
+            .reduce(|a, b| a.batch_with(b, |a, b| a.min(b)))
+            .unwrap();
+
+        let tile_size = Point2D::from(256_u32);
+        let min_pixel = (min_tile * tile_size).fit().as_();
+
+        self.field.iter_mut().for_each(|mut tile| {
+            tile.value_mut().set_offset(min_pixel);
+        });
+    }
 }
 
 impl<Option: VoxelizerOption> PrivateVoxelizerMethod<Option> for MapTileVoxelizer<Option>
