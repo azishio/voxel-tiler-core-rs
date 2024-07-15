@@ -11,7 +11,7 @@ repository = "https://github.com/azishio/voxel-tiler-core-rs"
 
 readme = "README.md"
 
-keywords = ["voxel", "point-cloud", "las", "ply"]
+keywords = ["voxel", "point-cloud", "las", "ply", "glb"]
 categories = ["concurrency", "data-structures", "encoding", "mathematics", "science::geo"]
 license = "MIT OR Apache-2.0"
 
