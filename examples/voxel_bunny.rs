@@ -27,9 +27,9 @@ fn main()
     {
         let glb = Glb::from_voxel_mesh(mesh.clone()).unwrap();
 
-        let writer = File::create("examples/exports/colored_stanford_bunny.glb").expect("I/O error");
+        let writer = File::create("examples/exports/bunny.glb").expect("I/O error");
         glb.to_writer(writer).expect("glTF binary output error");
-        println!("Generated colored_stanford_bunny.glb");
+        println!("Generated bunny.glb");
     }
 
 
@@ -38,9 +38,9 @@ fn main()
 
         let buf = ply.into_ascii_buf();
 
-        let mut writer = File::create("examples/exports/colored_stanford_bunny.ply").expect("I/O error");
+        let mut writer = File::create("examples/exports/bunny.ply").expect("I/O error");
         writer.write_all(&buf).expect("I/O error");
         writer.flush().expect("I/O error");
-        println!("Generated colored_stanford_bunny.ply");
+        println!("Generated bunny.ply");
     }
 }

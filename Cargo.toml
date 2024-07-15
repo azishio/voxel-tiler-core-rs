@@ -49,18 +49,18 @@ las = ["dep:las", "dep:laz"]
 image = ["dep:image"]
 
 [[example]]
-name = "terain"
-path = "examples/generate_terrain_glb.rs"
+name = "terrain"
+path = "examples/terrain_glb.rs"
 required-features = ["image"]
 
 [[example]]
 name = "tile"
-path = "examples/point_cloud_to_voxel_tile.rs"
+path = "examples/voxel_tile.rs"
 required-features = ["las"]
 
 [[example]]
 name = "bunny"
-path = "examples/generate_voxel_bunny.rs"
+path = "examples/voxel_bunny.rs"
 required-features = ["ply"]
 
 [package.metadata.docs.rs]

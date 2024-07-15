@@ -28,7 +28,7 @@ fn main() -> Result<(), anyhow::Error> {
 
     let glb = Glb::from_voxel_mesh_with_texture_projected_z(mesh, texture)?;
 
-    let mut writer = File::create("examples/terrain.glb")?;
+    let mut writer = File::create("examples/exports/terrain.glb")?;
     glb.to_writer(&mut writer)?;
     writer.flush()?;
 
