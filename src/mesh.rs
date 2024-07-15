@@ -24,7 +24,8 @@ where
     C: UInt + AsPrimitive<f32>,
     f32: AsPrimitive<P>,
 {
-    ///[`simplify_decoder`]を使用してメッシュを簡略化します。
+    /// [`simplify_decoder`]を使用してメッシュを簡略化します。
+    /// 連続した同色の平面ごとに簡略化を行います。
     pub fn simplify(self) -> Self
     {
         let VoxelMesh { points, faces, bounds, offset, resolution, .. } = self;
