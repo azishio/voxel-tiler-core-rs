@@ -316,19 +316,6 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
             let (min, max) = voxel_mesh.bounds;
             let offset = min + voxel_mesh.offset;
 
-            println!("min: {:?}, max: {:?}", min, max);
-            println!("size: {:?}", max - min);
-            println!("offset: {:?}", offset);
-
-            //vertex_indices.iter().map(|uv_id| {
-            //    let p = (voxel_mesh.points[*uv_id as usize] - offset).as_::<isize>();
-
-            //    let normalized = p.as_::<f32>() / (max - min).as_::<f32>();
-
-
-            //    UV(normalized.fit::<2>().data)
-            //}).collect::<Vec<_>>()
-
             voxel_mesh.points.iter().map(|&point| {
                 let p = (point - offset).as_::<isize>();
 

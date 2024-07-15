@@ -12,7 +12,7 @@ where
 {
     /// lasファイルから点群を読み込みます。
     /// 使用するには`las`featureを有効にしてください。
-    pub fn from_las(mut reader: las::Reader) -> Self <> {
+    pub fn from_las(mut reader: las::Reader) -> Self {
         let points = reader.points().flatten().map(|p| {
             let Point { x, y, z, color, .. } = p;
             let color = {
