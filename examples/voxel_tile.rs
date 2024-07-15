@@ -41,6 +41,7 @@ fn main() {
     let mut voxelizer = BuildMapTileVoxelizerDefault::build_voxelizer(resolution);
 
     voxelizer.add(ll_point_cloud);
+    voxelizer.fit_offset_to_min_tile();
 
     let tiles = voxelizer.finish_tiles();
 
