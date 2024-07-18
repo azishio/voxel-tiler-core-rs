@@ -148,7 +148,7 @@ impl Mesher
                     });
 
                     if !valid_side.contains(ValidSide::BORDER) {
-                        if vertices.clone().any(on_border) {
+                        if vertices.clone().all(on_border) {
                             return None;
                         }
                     }
