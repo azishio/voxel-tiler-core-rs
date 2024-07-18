@@ -292,13 +292,14 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
             ..Default::default()
         });
 
-        root.push(Scene {
+        let scene = root.push(Scene {
             extensions: Default::default(),
             extras: Default::default(),
             name: None,
             nodes: vec![node],
         });
 
+        root.scene = Some(scene);
 
         let json = root.to_string().map_err(|_| anyhow!("Serialization error"))?.into_bytes();
         let json_offset = Self::round_up_to_mul_of_four(json.len());
@@ -565,13 +566,14 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
             ..Default::default()
         });
 
-        root.push(Scene {
+        let scene = root.push(Scene {
             extensions: Default::default(),
             extras: Default::default(),
             name: None,
             nodes: vec![node],
         });
 
+        root.scene = Some(scene);
 
         let json = root.to_string().map_err(|_| anyhow!("Serialization error"))?.into_bytes();
         let json_offset = Self::round_up_to_mul_of_four(json.len());
