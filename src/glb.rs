@@ -198,11 +198,14 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
         });
 
         let (min, max) = {
-            let min = voxel_mesh.bounds.0.as_::<f32>();
-            let max = voxel_mesh.bounds.1.as_::<f32>();
+            let [min_x,min_y,min_z] = voxel_mesh.bounds.0.as_::<f32>().data;
+            let [max_x,max_y,max_z] = voxel_mesh.bounds.1.as_::<f32>().data;
 
-            let min = [min[0], min[1], min[2]];
-            let max = [max[0], max[1], max[2]];
+            println!("min: {:?}, max: {:?}", voxel_mesh.bounds.0.as_::<f32>().data, voxel_mesh.bounds.1.as_::<f32>().data);
+
+            // gltfの座標系に合わせる
+            let min = [min_x,min_z,-max_y];
+            let max = [max_x,max_z,-min_y];
 
             (min, max)
         };
@@ -385,10 +388,16 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
         });
 
         let (min, max) = {
-            let min = voxel_mesh.bounds.0.as_::<f32>();
-            let max = voxel_mesh.bounds.1.as_::<f32>();
+            let [min_x,min_y,min_z] = voxel_mesh.bounds.0.as_::<f32>().data;
+            let [max_x,max_y,max_z] = voxel_mesh.bounds.1.as_::<f32>().data;
 
-            (min.data, max.data)
+            println!("min: {:?}, max: {:?}", voxel_mesh.bounds.0.as_::<f32>().data, voxel_mesh.bounds.1.as_::<f32>().data);
+
+            // gltfの座標系に合わせる
+            let min = [min_x,min_z,-max_y];
+            let max = [max_x,max_z,-min_y];
+
+            (min, max)
         };
 
         let positions_accessor = root.push(Accessor {
