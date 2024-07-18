@@ -201,8 +201,6 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
             let [min_x,min_y,min_z] = voxel_mesh.bounds.0.as_::<f32>().data;
             let [max_x,max_y,max_z] = voxel_mesh.bounds.1.as_::<f32>().data;
 
-            println!("min: {:?}, max: {:?}", voxel_mesh.bounds.0.as_::<f32>().data, voxel_mesh.bounds.1.as_::<f32>().data);
-
             // gltfの座標系に合わせる
             let min = [min_x,min_z,-max_y];
             let max = [max_x,max_z,-min_y];
@@ -390,8 +388,6 @@ pub trait GlbGen<'a>: GlbGenPrivateMethod {
         let (min, max) = {
             let [min_x,min_y,min_z] = voxel_mesh.bounds.0.as_::<f32>().data;
             let [max_x,max_y,max_z] = voxel_mesh.bounds.1.as_::<f32>().data;
-
-            println!("min: {:?}, max: {:?}", voxel_mesh.bounds.0.as_::<f32>().data, voxel_mesh.bounds.1.as_::<f32>().data);
 
             // gltfの座標系に合わせる
             let min = [min_x,min_z,-max_y];
